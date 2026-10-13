@@ -21,7 +21,7 @@ Mở http://localhost:3001. Có thể đổi cổng bằng biến môi trường
 PORT=4000 npm start
 ```
 
-Ứng dụng là PWA: mở bằng `localhost` hoặc HTTPS để trình duyệt cho phép cài đặt vào màn hình chính. Service worker lưu shell giao diện và dùng dữ liệu API đã cache khi tạm thời mất mạng.
+Ứng dụng có manifest để trình duyệt hỗ trợ cài vào màn hình chính. Service worker cache cũ đã được gỡ; `public/sw.js` chỉ tồn tại tạm thời để tự gỡ đăng ký và xóa cache TKB ở các trình duyệt từng dùng phiên bản trước.
 
 Trong lúc phát triển, dùng `npm run dev` để chạy server trên mọi interface mạng nội bộ và tự khởi động lại khi các file mã nguồn, giao diện hoặc dữ liệu thay đổi. Truy cập bằng `http://<IP-máy-chạy-server>:3001` từ thiết bị cùng mạng.
 
