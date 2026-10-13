@@ -588,6 +588,45 @@ if (printBtn) printBtn.addEventListener("click", () => window.print());
 const reloadBtn = $("reload");
 if (reloadBtn) reloadBtn.addEventListener("click", () => window.location.reload());
 
+const feedbackDialog = $("feedback-dialog");
+const feedbackForm = $("feedback-form");
+const feedbackStatus = $("feedback-status");
+const feedbackSubmit = $("submit-feedback");
+const openFeedbackBtn = $("open-feedback");
+if (feedbackDialog && feedbackForm && feedbackStatus && feedbackSubmit && openFeedbackBtn) {
+  openFeedbackBtn.addEventListener("click", () => feedbackDialog.showModal());
+  $("close-feedback")?.addEventListener("click", () => feedbackDialog.close());
+  $("cancel-feedback")?.addEventListener("click", () => feedbackDialog.close());
+  feedbackForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    feedbackStatus.textContent = "Đang gửi góp ý…";
+    feedbackStatus.classList.remove("error");
+    feedbackSubmit.disabled = true;
+
+    const formData = new FormData(feedbackForm);
+    try {
+      const result = await fetchJSON("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.fromEntries(formData)),
+      });
+      feedbackForm.reset();
+      feedbackStatus.textContent = `${result.message} Mã góp ý #${result.number}.`;
+      const issueLink = document.createElement("a");
+      issueLink.href = result.url;
+      issueLink.target = "_blank";
+      issueLink.rel = "noopener noreferrer";
+      issueLink.textContent = "Xem trên GitHub";
+      feedbackStatus.append(" ", issueLink);
+    } catch (error) {
+      feedbackStatus.textContent = error.message;
+      feedbackStatus.classList.add("error");
+    } finally {
+      feedbackSubmit.disabled = false;
+    }
+  });
+}
+
 const pullRefreshEl = $("pull-refresh");
 let pullStartY = 0;
 let pullDistance = 0;

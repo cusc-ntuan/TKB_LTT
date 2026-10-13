@@ -32,6 +32,9 @@ Chạy kiểm thử bằng `npm test`.
 - Chọn chế độ xem theo lớp, giáo viên hoặc học sinh trực tiếp trên trang chính.
 - Có thể lọc thêm theo buổi hoặc tìm kiếm theo môn học, giáo viên, phòng và ghi chú.
 - Nhấn **Nhập Excel** để thay toàn bộ dữ liệu hiện có trong SQLite.
+- Nhấn **Góp ý** ở cuối trang để gửi đề xuất hoặc báo lỗi; nội dung sẽ được tạo thành GitHub Issue công khai trong repository `cusc-ntuan/TKB_LTT`. Không gửi thông tin cá nhân hoặc dữ liệu nhạy cảm trong góp ý.
+
+Để bật tính năng góp ý, cấu hình secret `GITHUB_FEEDBACK_TOKEN` trên môi trường triển khai. Dùng fine-grained personal access token chỉ cấp quyền **Issues: Read and write** cho repository `cusc-ntuan/TKB_LTT`. Token chỉ được dùng phía server và không được đưa vào mã frontend.
 
 Các truy vấn đọc lặp lại được cache trong bộ nhớ server để giảm tải SQLite. Cache được giới hạn tối đa 100 bộ lọc thời khóa biểu và tự xóa sau mỗi lần nhập dữ liệu.
 
@@ -65,6 +68,7 @@ Nhấn **Nhập Excel** trên website để thay toàn bộ dữ liệu trong SQ
 | GET | `/api/lessons` | Lấy thời khóa biểu theo query filter |
 | POST | `/api/import` | Nhập file Excel/CSV với field `file` |
 | POST | `/api/presence` | Cập nhật heartbeat và nhận số phiên trực tuyến |
+| POST | `/api/feedback` | Tạo GitHub Issue từ góp ý gửi qua website |
 
 Ví dụ:
 
