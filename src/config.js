@@ -11,6 +11,11 @@ const config = {
     projectId: env.VERCEL_PROJECT_ID || env.VERCEL_ANALYTICS_PROJECT_ID || env.PROJECT_ID || null,
     teamId: env.VERCEL_TEAM_ID || env.VERCEL_ANALYTICS_TEAM_ID || env.TEAM_ID || null,
   },
+  feedback: {
+    githubToken: env.GITHUB_FEEDBACK_TOKEN || null,
+    githubOwner: 'cusc-ntuan',
+    githubRepo: 'TKB_LTT',
+  },
 };
 
 export { config, env };

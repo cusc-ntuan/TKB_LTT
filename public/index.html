@@ -121,23 +121,54 @@
     </div>
   </main>
 
-  <footer>
+  <div class="actions-row">
     <div class="top-actions">
       <label class="upload">
         <input id="file" type="file" accept=".xlsx,.xls,.csv" hidden />
         <span>Nhập Excel</span>
       </label>
       <button id="reload" type="button" aria-label="Tải lại thời khóa biểu">Tải lại</button>
+      <button id="open-feedback" type="button">Góp ý</button>
       <button id="print" type="button">In</button>
     </div>
+  </div>
+  <footer>
     <span>Thời khóa biểu THPT Chuyên Lý Tự Trọng, Cần Thơ.</span>
     <span>Tạo cho Nguyễn Nam, lớp Chuyên Tin Khoá 37.</span>
-    <a href="https://github.com/cusc-ntuan/TKB_LTT" target="_blank" rel="noopener noreferrer">Mã nguồn trên GitHub</a>
+    <a class="github-link" href="https://github.com/cusc-ntuan/TKB_LTT" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+        <path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.56.1.76-.24.76-.54v-2.1c-3.1.67-3.76-1.32-3.76-1.32-.51-1.3-1.24-1.65-1.24-1.65-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15 1 1.7 2.62 1.21 3.26.93.1-.72.39-1.21.71-1.49-2.48-.28-5.09-1.24-5.09-5.52 0-1.22.44-2.21 1.15-2.99-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.55 0c2.11-1.44 3.05-1.14 3.05-1.14.61 1.54.23 2.68.11 2.96.72.78 1.15 1.77 1.15 2.99 0 4.29-2.61 5.24-5.1 5.51.4.35.76 1.03.76 2.08v3.09c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z"/>
+      </svg>
+      GitHub
+    </a>
     <div class="footer-stats">
       <span class="views">Hôm nay: <b id="today-viewers">—</b> / Tổng: <b id="total-viewers">—</b></span>
       <span class="online"><i></i><b id="online-count">0</b> đang trực tuyến</span>
     </div>
   </footer>
+  <dialog id="feedback-dialog" aria-labelledby="feedback-title">
+    <form id="feedback-form">
+      <div class="feedback-heading">
+        <h2 id="feedback-title">Gửi góp ý</h2>
+        <button id="close-feedback" class="feedback-close" type="button" aria-label="Đóng">×</button>
+      </div>
+      <label for="feedback-type">Loại góp ý</label>
+      <select id="feedback-type" name="type" required>
+        <option value="suggestion">Đề xuất cải thiện</option>
+        <option value="bug">Báo lỗi</option>
+        <option value="other">Khác</option>
+      </select>
+      <label for="feedback-subject">Tiêu đề</label>
+      <input id="feedback-subject" name="title" type="text" minlength="3" maxlength="120" required />
+      <label for="feedback-message">Nội dung</label>
+      <textarea id="feedback-message" name="message" rows="5" minlength="10" maxlength="4000" required></textarea>
+      <p id="feedback-status" role="status" aria-live="polite"></p>
+      <div class="feedback-actions">
+        <button id="cancel-feedback" type="button">Hủy</button>
+        <button id="submit-feedback" type="submit">Gửi góp ý</button>
+      </div>
+    </form>
+  </dialog>
   <script defer src="/_vercel/insights/script.js"></script>
   <script>
     const effectiveDate = window.TKB_CONFIG?.effectiveDate || "";
