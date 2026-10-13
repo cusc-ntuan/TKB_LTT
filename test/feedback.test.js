@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { config } from '../src/config.js';
 import { createFeedbackIssue, validateFeedback } from '../src/services/feedback.service.js';
 
 test('validateFeedback trims and validates public feedback fields', () => {
@@ -66,4 +67,25 @@ test('createFeedbackIssue reports missing configuration and GitHub failures', as
     }),
     { status: 502 }
   );
+});
+
+test('feedback configuration is passed to the GitHub issue service', async () => {
+  let requestUrl;
+  const issue = await createFeedbackIssue(
+    { type: 'other', title: 'Góp ý', message: 'Nội dung góp ý đầy đủ.' },
+    {
+      ...config.feedback,
+      token: 'test-token',
+      fetchImpl: async (url) => {
+        requestUrl = url;
+        return {
+          ok: true,
+          json: async () => ({ number: 13, html_url: 'https://github.com/cusc-ntuan/TKB_LTT/issues/13' }),
+        };
+      },
+    }
+  );
+
+  assert.equal(requestUrl, 'https://api.github.com/repos/cusc-ntuan/TKB_LTT/issues');
+  assert.equal(issue.number, 13);
 });
