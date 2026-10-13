@@ -1,0 +1,20 @@
+{
+  "name": "thoi-khoa-bieu",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Website hiển thị Thời khóa biểu THPT Chuyên Lý Tự Trọng Cần Thơ",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test",
+    "vercel-build": "node scripts/version-assets.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "dotenv": "^18.0.5",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "multer": "^2.4.0"
+  }
+}

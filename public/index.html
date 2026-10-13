@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thời khóa biểu THPT Chuyên Lý Tự Trọng Cần Thơ</title>
+  <meta name="theme-color" content="#172a3a" />
+  <meta name="description" content="Tra cứu thời khóa biểu (TKB) Trường THPT Chuyên Lý Tự Trọng, Cần Thơ." />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
+  <meta name="author" content="THPT Chuyên Lý Tự Trọng - Cần Thơ" />
+  <link rel="canonical" href="https://xemtkb.io.vn/" />
+  <link rel="alternate" hreflang="vi" href="https://xemtkb.io.vn/" />
+  <link rel="alternate" hreflang="x-default" href="https://xemtkb.io.vn/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="vi_VN" />
+  <meta property="og:site_name" content="Thời khóa biểu THPT Chuyên Lý Tự Trọng Cần Thơ" />
+  <meta property="og:url" content="https://xemtkb.io.vn/" />
+  <meta property="og:title" content="Thời khóa biểu THPT Chuyên Lý Tự Trọng Cần Thơ" />
+  <meta property="og:description" content="Tra cứu thời khóa biểu Trường THPT Chuyên Lý Tự Trọng, Cần Thơ." />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Thời khóa biểu THPT Chuyên Lý Tự Trọng Cần Thơ" />
+  <meta name="twitter:description" content="Tra cứu thời khóa biểu Trường THPT Chuyên Lý Tự Trọng, Cần Thơ." />
+  <link rel="preload" href="/api/filters" as="fetch" crossorigin="anonymous" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+  <link rel="stylesheet" href="/styles/main.css?v=__ASSET_VERSION__" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    window.TKB_CONFIG = window.TKB_CONFIG || {};
+    window.TKB_CONFIG.effectiveDate = "12/10/2026";
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://xemtkb.io.vn/#website",
+        "url": "https://xemtkb.io.vn/",
+        "name": "Thời khóa biểu THPT Chuyên Lý Tự Trọng Cần Thơ",
+        "alternateName": ["TKB LTT", "TKB Chuyên Lý Tự Trọng", "Thời khóa biểu Lý Tự Trọng"],
+        "inLanguage": "vi-VN",
+        "description": "Tra cứu thời khóa biểu Trường THPT Chuyên Lý Tự Trọng, Cần Thơ theo lớp, giáo viên và học sinh.",
+        "publisher": { "@id": "https://xemtkb.io.vn/#school" }
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://xemtkb.io.vn/#app",
+        "name": "TKB LTT",
+        "url": "https://xemtkb.io.vn/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "inLanguage": "vi-VN",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "VND" }
+      },
+      {
+        "@type": "EducationalOrganization",
+        "@id": "https://xemtkb.io.vn/#school",
+        "name": "Trường THPT Chuyên Lý Tự Trọng",
+        "alternateName": "Chuyên Lý Tự Trọng Cần Thơ",
+        "url": "https://xemtkb.io.vn/",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Cần Thơ",
+          "addressRegion": "Cần Thơ",
+          "addressCountry": "VN"
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <div class="bg"></div>
+  <header class="top">
+    <div class="brand">
+      <span class="mark">TKB</span>
+      <div>
+        <h1 id="intro-title">Tra cứu thời khóa biểu</h1>
+        <p>THPT Chuyên Lý Tự Trọng · Cần Thơ</p>
+        <p>Áp dụng từ <span id="effective-date-value"></span></p>
+      </div>
+    </div>
+  </header>
+  <p class="pull-refresh" id="pull-refresh" aria-live="polite"></p>
+  <p class="flash" id="flash"></p>
+  <div class="controls">
+    <div class="mode-filter">
+      <select id="mode-select" aria-label="Chế độ xem">
+        <option value="lop">Lớp</option>
+        <option value="giao_vien">Giáo viên</option>
+        <option value="ho_va_ten">Học sinh</option>
+      </select>
+      <div id="entity-control" aria-label="Giá trị lọc"></div>
+    </div>
+    <section class="view-controls" id="view-controls" aria-label="Kiểu hiển thị">
+      <div class="view-switch">
+        <button type="button" data-view="week" class="active">Xem cả tuần</button>
+      </div>
+      <div class="day-buttons" id="day-control">
+        <div id="day-buttons" class="day-list" role="group" aria-label="Chọn ngày">
+          <button type="button" data-day="Thứ 2">T2</button>
+          <button type="button" data-day="Thứ 3">T3</button>
+          <button type="button" data-day="Thứ 4">T4</button>
+          <button type="button" data-day="Thứ 5">T5</button>
+          <button type="button" data-day="Thứ 6">T6</button>
+          <button type="button" data-day="Thứ 7">T7</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <main>
+    <div class="legend" id="legend"></div>
+    <div class="board" id="board">
+      <p class="empty">Vui lòng chọn lớp để xem thời khóa biểu.</p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="top-actions">
+      <label class="upload">
+        <input id="file" type="file" accept=".xlsx,.xls,.csv" hidden />
+        <span>Nhập Excel</span>
+      </label>
+      <button id="reload" type="button" aria-label="Tải lại thời khóa biểu">Tải lại</button>
+      <button id="print" type="button">In</button>
+    </div>
+    <span>Thời khóa biểu THPT Chuyên Lý Tự Trọng, Cần Thơ.</span>
+    <span>Tạo cho Nguyễn Nam, lớp Chuyên Tin Khoá 37.</span>
+    <a href="https://github.com/cusc-ntuan/TKB_LTT" target="_blank" rel="noopener noreferrer">Mã nguồn trên GitHub</a>
+    <div class="footer-stats">
+      <span class="views">Hôm nay: <b id="today-viewers">—</b> / Tổng: <b id="total-viewers">—</b></span>
+      <span class="online"><i></i><b id="online-count">0</b> đang trực tuyến</span>
+    </div>
+  </footer>
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script>
+    const effectiveDate = window.TKB_CONFIG?.effectiveDate || "";
+    const effectiveDateValueEl = document.getElementById("effective-date-value");
+    if (effectiveDateValueEl) {
+      effectiveDateValueEl.textContent = effectiveDate;
+    }
+
+    const metaDescriptionEl = document.querySelector('meta[name="description"]');
+    if (metaDescriptionEl) {
+      metaDescriptionEl.setAttribute(
+        "content",
+        `Tra cứu thời khóa biểu (TKB) Trường THPT Chuyên Lý Tự Trọng, Cần Thơ. Áp dụng từ ${effectiveDate}.`
+      );
+    }
+  </script>
+  <script type="module" src="/js/utils.js?v=__ASSET_VERSION__"></script>
+  <script type="module" src="/js/app.js?v=__ASSET_VERSION__"></script>
+</body>
+</html>

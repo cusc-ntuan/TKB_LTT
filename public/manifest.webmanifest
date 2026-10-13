@@ -1,0 +1,25 @@
+{
+  "name": "Thời khóa biểu THPT Chuyên Lý Tự Trọng",
+  "short_name": "TKB LTT",
+  "description": "Tra cứu thời khóa biểu Trường THPT Chuyên Lý Tự Trọng, Cần Thơ.",
+  "lang": "vi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#e5eeee",
+  "theme_color": "#172a3a",
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
