@@ -12,9 +12,9 @@ const config = {
     teamId: env.VERCEL_TEAM_ID || env.VERCEL_ANALYTICS_TEAM_ID || env.TEAM_ID || null,
   },
   feedback: {
-    githubToken: env.GITHUB_FEEDBACK_TOKEN || null,
-    githubOwner: 'cusc-ntuan',
-    githubRepo: 'TKB_LTT',
+    token: env.GITHUB_FEEDBACK_TOKEN || null,
+    owner: 'cusc-ntuan',
+    repo: 'TKB_LTT',
   },
 };
 
