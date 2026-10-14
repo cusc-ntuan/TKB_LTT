@@ -97,8 +97,8 @@ async function initialize() {
       provider: isTestFileDatabase ? "test" : "Turso",
     });
     initialization = (async () => {
-      await client.execute(`
-        CREATE TABLE IF NOT EXISTS lessons (
+      await client.batch([
+        [`CREATE TABLE IF NOT EXISTS lessons (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           ho_va_ten TEXT NOT NULL DEFAULT '',
           lop TEXT NOT NULL DEFAULT '',
@@ -110,13 +110,13 @@ async function initialize() {
           giao_vien TEXT NOT NULL DEFAULT '',
           loai_tiet TEXT NOT NULL DEFAULT '',
           ghi_chu TEXT NOT NULL DEFAULT ''
-        )
-      `);
-      await client.execute("CREATE INDEX IF NOT EXISTS idx_lessons_lop ON lessons(lop)");
-      await client.execute("CREATE INDEX IF NOT EXISTS idx_lessons_gv ON lessons(giao_vien)");
-      await client.execute("CREATE INDEX IF NOT EXISTS idx_lessons_phong ON lessons(phong_hoc)");
-      await client.execute("CREATE INDEX IF NOT EXISTS idx_lessons_ten ON lessons(ho_va_ten)");
-      await client.execute("CREATE INDEX IF NOT EXISTS idx_lessons_thu ON lessons(thu)");
+        )`],
+        ["CREATE INDEX IF NOT EXISTS idx_lessons_lop ON lessons(lop)"],
+        ["CREATE INDEX IF NOT EXISTS idx_lessons_gv ON lessons(giao_vien)"],
+        ["CREATE INDEX IF NOT EXISTS idx_lessons_phong ON lessons(phong_hoc)"],
+        ["CREATE INDEX IF NOT EXISTS idx_lessons_ten ON lessons(ho_va_ten)"],
+        ["CREATE INDEX IF NOT EXISTS idx_lessons_thu ON lessons(thu)"],
+      ], "write");
 
       const workbookPath = path.join(__dirname, "..", "..", "data", "TKB.xlsx");
       const currentTotal = Number(
@@ -201,32 +201,25 @@ async function listLessons(filters = {}) {
   return lessons;
 }
 
-async function distinct(column) {
-  const result = await client.execute(`
-    SELECT DISTINCT ${column} AS value FROM lessons
-    WHERE TRIM(${column}) != ''
-    ORDER BY value COLLATE NOCASE
-  `);
-  return result.rows.map((row) => row.value);
-}
-
 async function stats() {
   await initialize();
   const cachedStats = getCache(statsCache);
   if (cachedStats) return cachedStats;
 
-  const result = await client.execute("SELECT COUNT(*) AS total FROM lessons");
-  const [lop, giao_vien, ho_va_ten] = await Promise.all([
-    distinct("lop"),
-    distinct("giao_vien"),
-    distinct("ho_va_ten"),
-  ]);
+  const result = await client.execute(`
+    SELECT
+      COUNT(*) AS total,
+      COUNT(DISTINCT CASE WHEN TRIM(lop) != '' THEN lop END) AS lop,
+      COUNT(DISTINCT CASE WHEN TRIM(giao_vien) != '' THEN giao_vien END) AS giao_vien,
+      COUNT(DISTINCT CASE WHEN TRIM(ho_va_ten) != '' THEN ho_va_ten END) AS ho_va_ten
+    FROM lessons
+  `);
   statsCache = {
     value: {
       total: Number(result.rows[0].total),
-      lop: lop.length,
-      giao_vien: giao_vien.length,
-      ho_va_ten: ho_va_ten.length,
+      lop: Number(result.rows[0].lop),
+      giao_vien: Number(result.rows[0].giao_vien),
+      ho_va_ten: Number(result.rows[0].ho_va_ten),
     },
     expiresAt: Date.now() + CACHE_TTL_MS,
   };
@@ -238,14 +231,17 @@ async function filters() {
   const cachedFilters = getCache(filtersCache);
   if (cachedFilters) return cachedFilters;
 
-  const [lop, giao_vien, ho_va_ten, thu, buoi, mon_hoc] = await Promise.all([
-    distinct("lop"),
-    distinct("giao_vien"),
-    distinct("ho_va_ten"),
-    distinct("thu"),
-    distinct("buoi"),
-    distinct("mon_hoc"),
-  ]);
+  const columns = ["lop", "giao_vien", "ho_va_ten", "thu", "buoi", "mon_hoc"];
+  const results = await client.batch(
+    columns.map((column) => [
+      `SELECT DISTINCT ${column} AS value FROM lessons
+       WHERE TRIM(${column}) != ''
+       ORDER BY value COLLATE NOCASE`,
+    ]),
+    "read"
+  );
+  const values = results.map((result) => result.rows.map((row) => row.value));
+  const [lop, giao_vien, ho_va_ten, thu, buoi, mon_hoc] = values;
   filtersCache = {
     value: { lop, giao_vien, ho_va_ten, thu, buoi, mon_hoc },
     expiresAt: Date.now() + CACHE_TTL_MS,
