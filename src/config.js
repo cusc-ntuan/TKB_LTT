@@ -6,6 +6,12 @@ const config = {
   env,
   port: Number.parseInt(env.PORT || '3000', 10) || 3000,
   host: env.HOST || '0.0.0.0',
+  database: {
+    turso: {
+      url: env.TURSO_DATABASE_URL?.trim() || null,
+      authToken: env.TURSO_AUTH_TOKEN?.trim() || null,
+    },
+  },
   vercel: {
     token: env.VERCEL_TOKEN || env.VERCEL_ACCESS_TOKEN || env.VERCEL_ANALYTICS_TOKEN || null,
     projectId: env.VERCEL_PROJECT_ID || env.VERCEL_ANALYTICS_PROJECT_ID || env.PROJECT_ID || null,

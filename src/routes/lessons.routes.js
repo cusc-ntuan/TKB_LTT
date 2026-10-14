@@ -1,16 +1,16 @@
 import { listLessons, filters, stats } from '../lib/db.js';
 
 function registerLessonRoutes(app) {
-  app.get('/api/stats', (_req, res) => {
-    res.json(stats());
+  app.get('/api/stats', async (_req, res) => {
+    res.json(await stats());
   });
 
-  app.get('/api/filters', (_req, res) => {
-    res.json(filters());
+  app.get('/api/filters', async (_req, res) => {
+    res.json(await filters());
   });
 
-  app.get('/api/lessons', (req, res) => {
-    res.json(listLessons(req.query));
+  app.get('/api/lessons', async (req, res) => {
+    res.json(await listLessons(req.query));
   });
 }
 
