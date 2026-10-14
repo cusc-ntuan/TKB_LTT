@@ -611,13 +611,7 @@ if (feedbackDialog && feedbackForm && feedbackStatus && feedbackSubmit && openFe
         body: JSON.stringify(Object.fromEntries(formData)),
       });
       feedbackForm.reset();
-      feedbackStatus.textContent = `${result.message} Mã góp ý #${result.number}.`;
-      const issueLink = document.createElement("a");
-      issueLink.href = result.url;
-      issueLink.target = "_blank";
-      issueLink.rel = "noopener noreferrer";
-      issueLink.textContent = "Xem trên GitHub";
-      feedbackStatus.append(" ", issueLink);
+      feedbackStatus.textContent = `${result.message}`;
     } catch (error) {
       feedbackStatus.textContent = error.message;
       feedbackStatus.classList.add("error");

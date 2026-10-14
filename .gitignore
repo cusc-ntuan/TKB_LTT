@@ -5,4 +5,5 @@ data/*.db-shm
 uploads/
 .env
 .env.*
+!.env.example
 .DS_Store
