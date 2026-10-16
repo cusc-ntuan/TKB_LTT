@@ -96,12 +96,18 @@
         <option value="ho_va_ten">Học sinh</option>
       </select>
       <div id="entity-control" aria-label="Giá trị lọc"></div>
+      <button type="button" id="share-link" aria-label="Chia sẻ liên kết" title="Chia sẻ liên kết">
+        <svg class="share-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
+          <path d="M12 15V3m0 0 5 5m-5-5L7 8M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+        </svg>
+      </button>
     </div>
     <section class="view-controls" id="view-controls" aria-label="Kiểu hiển thị">
       <div class="view-switch">
         <button type="button" data-view="week" class="active">Xem cả tuần</button>
       </div>
       <div class="day-buttons" id="day-control">
+        <button type="button" id="today">Hôm nay</button>
         <div id="day-buttons" class="day-list" role="group" aria-label="Chọn ngày">
           <button type="button" data-day="Thứ 2">T2</button>
           <button type="button" data-day="Thứ 3">T3</button>
@@ -116,6 +122,7 @@
 
   <main>
     <div class="legend" id="legend"></div>
+    <h2 class="print-heading" id="print-heading"></h2>
     <div class="board" id="board">
       <p class="empty">Vui lòng chọn lớp để xem thời khóa biểu.</p>
     </div>
@@ -123,13 +130,13 @@
 
   <div class="actions-row">
     <div class="top-actions">
-      <label class="upload">
-        <input id="file" type="file" accept=".xlsx,.xls,.csv" hidden />
-        <span>Nhập Excel</span>
-      </label>
       <button id="reload" type="button" aria-label="Tải lại thời khóa biểu">Tải lại</button>
       <button id="open-feedback" type="button">Góp ý</button>
       <button id="print" type="button">In</button>
+      <label class="upload">
+        <input id="file" type="file" accept=".xlsx,.csv" hidden />
+        <span>Nhập Excel/CSV</span>
+      </label>
     </div>
   </div>
   <footer>
@@ -166,6 +173,27 @@
       <div class="feedback-actions">
         <button id="cancel-feedback" type="button">Hủy</button>
         <button id="submit-feedback" type="submit">Gửi góp ý</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="import-preview-dialog" aria-labelledby="import-preview-title">
+    <form id="import-preview-form">
+      <div class="feedback-heading">
+        <h2 id="import-preview-title">Xem trước dữ liệu nhập</h2>
+        <button id="close-import-preview" class="feedback-close" type="button" aria-label="Đóng">×</button>
+      </div>
+      <p id="import-preview-summary"></p>
+      <div class="import-sample-wrap">
+        <table class="import-sample">
+          <thead><tr><th>Thứ</th><th>Buổi</th><th>Tiết</th><th>Lớp</th><th>Môn</th></tr></thead>
+          <tbody id="import-preview-sample"></tbody>
+        </table>
+      </div>
+      <p class="import-warning">Xác nhận sẽ thay thế toàn bộ thời khóa biểu hiện tại.</p>
+      <p id="import-preview-status" role="status" aria-live="polite"></p>
+      <div class="feedback-actions">
+        <button id="cancel-import-preview" type="button">Hủy</button>
+        <button id="confirm-import" type="submit">Xác nhận nhập</button>
       </div>
     </form>
   </dialog>

@@ -14,6 +14,14 @@ if (!tursoUrl || (!tursoToken && !isTestFileDatabase)) {
   throw new Error("Cần cấu hình TURSO_DATABASE_URL và TURSO_AUTH_TOKEN để kết nối Turso.");
 }
 
+async function dataStatus() {
+  await initialize();
+  const result = await client.execute({
+    sql: "SELECT value FROM app_metadata WHERE key = 'dataset_updated_at'",
+  });
+  return { updatedAt: result.rows[0]?.value || null };
+}
+
 if (!isTestFileDatabase && !/^https:\/\/|^libsql:\/\//.test(tursoUrl)) {
   throw new Error("TURSO_DATABASE_URL phải là URL Turso (libsql:// hoặc https://).");
 }
@@ -83,6 +91,11 @@ async function replaceRows(rows) {
   try {
     await transaction.execute("DELETE FROM lessons");
     await insertRows(transaction, rows);
+    await transaction.execute({
+      sql: `INSERT INTO app_metadata (key, value) VALUES ('dataset_updated_at', ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      args: [new Date().toISOString()],
+    });
     await transaction.commit();
   } catch (error) {
     await transaction.rollback();
@@ -111,6 +124,11 @@ async function initialize() {
           loai_tiet TEXT NOT NULL DEFAULT '',
           ghi_chu TEXT NOT NULL DEFAULT ''
         )`],
+        [`CREATE TABLE IF NOT EXISTS app_metadata (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL DEFAULT ''
+        )`],
+        ["INSERT OR IGNORE INTO app_metadata (key, value) VALUES ('dataset_updated_at', '')"],
         ["CREATE INDEX IF NOT EXISTS idx_lessons_lop ON lessons(lop)"],
         ["CREATE INDEX IF NOT EXISTS idx_lessons_gv ON lessons(giao_vien)"],
         ["CREATE INDEX IF NOT EXISTS idx_lessons_phong ON lessons(phong_hoc)"],
@@ -150,6 +168,9 @@ async function initialize() {
 
 async function replaceAll(rows) {
   await initialize();
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error("File không có dòng thời khóa biểu hợp lệ; dữ liệu hiện tại được giữ nguyên.");
+  }
   await replaceRows(rows);
   clearCache();
   return { imported: rows.length };
@@ -249,4 +270,4 @@ async function filters() {
   return filtersCache.value;
 }
 
-export { replaceAll, listLessons, filters, stats };
+export { replaceAll, listLessons, filters, stats, dataStatus };
