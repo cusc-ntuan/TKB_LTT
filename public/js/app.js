@@ -15,6 +15,7 @@ const PALETTE = [
 const FILTER_STORAGE_KEY = "tkb-filters";
 const PRESENCE_STORAGE_KEY = "tkb-client-id";
 const PULL_REFRESH_THRESHOLD = 72;
+const sharedParams = new URLSearchParams(window.location.search);
 
 const savedFilters = (() => {
   try {
@@ -25,9 +26,11 @@ const savedFilters = (() => {
 })();
 
 const state = {
-  mode: MODE_LABEL[savedFilters.mode] ? savedFilters.mode : "lop",
-  view: savedFilters.view === "day" ? "day" : "week",
-  day: "",
+  mode: MODE_LABEL[sharedParams.get("mode")] ? sharedParams.get("mode")
+    : MODE_LABEL[savedFilters.mode] ? savedFilters.mode : "lop",
+  view: sharedParams.get("view") === "day" || sharedParams.get("view") === "week"
+    ? sharedParams.get("view") : savedFilters.view === "day" ? "day" : "week",
+  day: sharedParams.get("day") || savedFilters.day || "",
   filters: null,
   lessons: [],
 };
@@ -118,19 +121,33 @@ function fillSelect(el, values, placeholder) {
 function saveFilters() {
   const entityByMode = savedFilters.entityByMode || {};
   const entityEl = $("entity");
-  const buoiEl = $("buoi");
-  const qEl = $("q");
 
   if (entityEl) entityByMode[state.mode] = entityEl.value;
   savedFilters.mode = state.mode;
   savedFilters.view = state.view;
   savedFilters.entityByMode = entityByMode;
-  savedFilters.buoi = buoiEl ? buoiEl.value : savedFilters.buoi || "";
-  savedFilters.q = qEl ? qEl.value : savedFilters.q || "";
+  delete savedFilters.buoi;
+  delete savedFilters.q;
+  savedFilters.day = state.day;
 
   try {
     localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(savedFilters));
   } catch (_err) {}
+  syncFiltersToUrl();
+}
+
+function syncFiltersToUrl() {
+  const url = new URL(window.location.href);
+  const modeKeys = Object.keys(MODE_LABEL);
+  for (const key of [...modeKeys, "mode", "buoi", "q", "view", "day"]) {
+    url.searchParams.delete(key);
+  }
+  url.searchParams.set("mode", state.mode);
+  const entity = $("entity")?.value.trim() || savedFilters.entityByMode?.[state.mode] || "";
+  if (entity) url.searchParams.set(state.mode, entity);
+  url.searchParams.set("view", state.view);
+  if (state.view === "day" && state.day) url.searchParams.set("day", state.day);
+  window.history.replaceState(null, "", url);
 }
 
 function ensureSelectedModeAvailable() {
@@ -175,12 +192,21 @@ async function fetchJSON(url, options) {
   return data;
 }
 
+let flashTimeout;
+
 function showFlash(message, isError = false) {
   const el = $("flash");
   if (!el) return;
+  clearTimeout(flashTimeout);
   el.style.display = !message ? "none" : "";
   el.textContent = message;
   el.classList.toggle("error", isError);
+  if (message) {
+    flashTimeout = setTimeout(() => {
+      el.style.display = "none";
+      el.textContent = "";
+    }, 5000);
+  }
 }
 
 function dayNameForDate(date) {
@@ -250,6 +276,7 @@ async function updateAnalytics() {
 }
 
 async function loadFilters() {
+  const urlParams = new URLSearchParams(window.location.search);
   state.filters = await fetchJSON("/api/filters");
   ensureSelectedModeAvailable();
   const studentModeOption = $("mode-select")?.querySelector('option[value="ho_va_ten"]');
@@ -262,7 +289,9 @@ async function loadFilters() {
   if (buoiEl) {
     fillSelect(buoiEl, state.filters.buoi, "Cả ngày");
   }
-  state.day = defaultDay();
+  state.day = state.filters.thu.includes(urlParams.get("day"))
+    ? urlParams.get("day") : state.filters.thu.includes(savedFilters.day)
+      ? savedFilters.day : defaultDay();
 
   updateEntitySelect();
   const entityEl = $("entity");
@@ -272,14 +301,18 @@ async function loadFilters() {
     return;
   }
 
-  const savedEntity = savedFilters.entityByMode?.[state.mode] || "";
+  const sharedEntity = urlParams.get(state.mode);
+  const savedEntity = sharedEntity ?? savedFilters.entityByMode?.[state.mode] ?? "";
+  if (sharedEntity !== null) {
+    savedFilters.entityByMode = savedFilters.entityByMode || {};
+    savedFilters.entityByMode[state.mode] = sharedEntity;
+  }
   const entityValues = state.filters[state.mode] || [];
   if (entityEl.tagName === "INPUT" || entityValues.includes(savedEntity)) {
     entityEl.value = savedEntity;
   }
-  if (buoiEl && state.filters.buoi.includes(savedFilters.buoi)) buoiEl.value = savedFilters.buoi;
   const qEl = $("q");
-  if (qEl) qEl.value = savedFilters.q || "";
+  if (qEl) qEl.value = "";
   syncModeButtons();
   syncViewControls();
 }
@@ -336,13 +369,23 @@ async function loadLessons() {
   const qEl = $("q");
 
   const entity = entityEl ? entityEl.value.trim() : (savedFilters.entityByMode?.[state.mode] || "");
-  const buoi = buoiEl ? buoiEl.value : savedFilters.buoi || "";
-  const q = qEl ? qEl.value.trim() : savedFilters.q || "";
+  const buoi = buoiEl?.value || "";
+  const q = qEl?.value.trim() || "";
+  updatePrintHeading(entity);
 
   if (!entity) {
     state.lessons = [];
     renderFilterPrompt();
     return;
+  }
+
+  function updatePrintHeading(entity = $("entity")?.value.trim() || "") {
+    const heading = $("print-heading");
+    if (!heading) return;
+    const parts = [MODE_LABEL[state.mode], entity];
+    if (state.view === "day") parts.push(state.day);
+    else parts.push("Cả tuần");
+    heading.textContent = `Thời khóa biểu${entity ? ` ${parts.join(" · ")}` : ""}`;
   }
   if (entity) params.set(state.mode, entity);
   if (buoi) params.set("buoi", buoi);
@@ -524,6 +567,7 @@ if (viewControlsEl) {
     state.view = button.dataset.view;
     saveFilters();
     syncViewControls();
+    updatePrintHeading();
     renderBoard();
   });
 }
@@ -550,6 +594,19 @@ if (dayButtons) {
     state.day = button.dataset.day;
     saveFilters();
     syncViewControls();
+    updatePrintHeading();
+    renderBoard();
+  });
+}
+
+const todayBtn = $("today");
+if (todayBtn) {
+  todayBtn.addEventListener("click", () => {
+    state.view = "day";
+    state.day = dayNameForDate(new Date());
+    saveFilters();
+    syncViewControls();
+    updatePrintHeading();
     renderBoard();
   });
 }
@@ -563,6 +620,38 @@ if (searchEl) {
 }
 
 const fileEl = $("file");
+let pendingImportFile;
+const importPreviewDialog = $("import-preview-dialog");
+const importPreviewForm = $("import-preview-form");
+const importPreviewStatus = $("import-preview-status");
+const confirmImportBtn = $("confirm-import");
+
+function closeImportPreview() {
+  pendingImportFile = null;
+  importPreviewDialog?.close();
+}
+
+function renderImportPreview(preview) {
+  const summary = $("import-preview-summary");
+  const sample = $("import-preview-sample");
+  if (summary) {
+    const classes = preview.classes.length ? ` Lớp: ${preview.classes.join(", ")}${preview.classCount > preview.classes.length ? ", …" : ""}.` : "";
+    summary.textContent = `${preview.filename}: ${preview.rowCount} dòng, ${preview.classCount} lớp, ${preview.dayCount} ngày.${classes}`;
+  }
+  if (sample) {
+    sample.replaceChildren();
+    for (const lesson of preview.sample) {
+      const row = document.createElement("tr");
+      for (const value of [lesson.thu, lesson.buoi, lesson.tiet, lesson.lop, lesson.mon_hoc]) {
+        const cell = document.createElement("td");
+        cell.textContent = value || "—";
+        row.append(cell);
+      }
+      sample.append(row);
+    }
+  }
+}
+
 if (fileEl) {
   fileEl.addEventListener("change", async (e) => {
     const file = e.target.files[0];
@@ -571,19 +660,96 @@ if (fileEl) {
     const body = new FormData();
     body.append("file", file);
     try {
-      const result = await fetchJSON("/api/import", { method: "POST", body });
-      showFlash(result.message);
-      await loadStats();
-      await loadFilters();
-      await loadLessons();
+      showFlash("Đang phân tích file để xem trước…");
+      const preview = await fetchJSON("/api/import/preview", { method: "POST", body });
+      pendingImportFile = file;
+      renderImportPreview(preview);
+      if (importPreviewStatus) importPreviewStatus.textContent = "";
+      importPreviewDialog?.showModal();
+      showFlash("");
     } catch (err) {
       showFlash(err.message, true);
     }
   });
 }
 
+if (importPreviewForm && importPreviewDialog && importPreviewStatus && confirmImportBtn) {
+  $("close-import-preview")?.addEventListener("click", closeImportPreview);
+  $("cancel-import-preview")?.addEventListener("click", closeImportPreview);
+  importPreviewDialog.addEventListener("close", () => { pendingImportFile = null; });
+  importPreviewForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!pendingImportFile) {
+      importPreviewStatus.textContent = "Không còn file để nhập. Vui lòng chọn lại file.";
+      return;
+    }
+    const body = new FormData();
+    body.append("file", pendingImportFile);
+    importPreviewStatus.textContent = "Đang thay thế dữ liệu…";
+    confirmImportBtn.disabled = true;
+    try {
+      const result = await fetchJSON("/api/import", { method: "POST", body });
+      importPreviewDialog.close();
+      showFlash(result.message);
+      await Promise.all([loadStats(), loadFilters()]);
+      await loadLessons();
+    } catch (error) {
+      importPreviewStatus.textContent = error.message;
+      showFlash(error.message, true);
+    } finally {
+      confirmImportBtn.disabled = false;
+    }
+  });
+}
+
 const printBtn = $("print");
 if (printBtn) printBtn.addEventListener("click", () => window.print());
+
+function visibleLessons() {
+  return state.view === "day"
+    ? state.lessons.filter((lesson) => lesson.thu === state.day)
+    : state.lessons;
+}
+
+async function copyText(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.append(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) throw new Error("Trình duyệt không cho phép sao chép. Hãy kiểm tra quyền clipboard.");
+}
+
+const shareLinkBtn = $("share-link");
+if (shareLinkBtn) {
+  shareLinkBtn.addEventListener("click", async () => {
+    saveFilters();
+    const shareData = {
+      title: document.title,
+      text: "Thời khóa biểu THPT Chuyên Lý Tự Trọng, Cần Thơ",
+      url: window.location.href,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        showFlash("Đã chia sẻ liên kết thời khóa biểu.");
+      } else {
+        await copyText(shareData.url);
+        showFlash("Thiết bị không hỗ trợ chia sẻ trực tiếp; đã sao chép liên kết.");
+      }
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      showFlash(error.message, true);
+    }
+  });
+}
 
 const reloadBtn = $("reload");
 if (reloadBtn) reloadBtn.addEventListener("click", () => window.location.reload());

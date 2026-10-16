@@ -35,6 +35,25 @@ test("parses the bundled workbook data sheet", async () => {
   assert.ok(rows[0].thu);
 });
 
+test("parses CSV timetable uploads", async () => {
+  const rows = await parseExcelBuffer(
+    Buffer.from("Họ và Tên,Lớp,Thứ,Buổi,Tiết,Môn Học\nNguyễn Văn A,10A1,Thứ 2,Sáng,1,Toán"),
+    "thoi-khoa-bieu.csv"
+  );
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].lop, "10A1");
+  assert.equal(rows[0].thu, "Thứ 2");
+  assert.equal(rows[0].mon_hoc, "Toán");
+});
+
+test("reports legacy XLS files as unsupported", async () => {
+  await assert.rejects(
+    parseExcelBuffer(Buffer.from("not an XLSX file"), "schedule.xls"),
+    /Định dạng \.xls cũ chưa được hỗ trợ/
+  );
+});
+
 test("selects a valid data sheet instead of relying on sheet order", async () => {
   const workbook = new ExcelJS.Workbook();
   workbook.addWorksheet("Tổng hợp");

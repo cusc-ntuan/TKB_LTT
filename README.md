@@ -46,8 +46,9 @@ Chạy kiểm thử bằng `npm test`.
 ## Sử dụng
 
 - Chọn chế độ xem theo lớp, giáo viên hoặc học sinh trực tiếp trên trang chính.
-- Có thể lọc thêm theo buổi hoặc tìm kiếm theo môn học, giáo viên, phòng và ghi chú.
-- Nhấn **Nhập Excel** để thay toàn bộ dữ liệu hiện có trong database.
+- Nút **Hôm nay** mở lịch trong ngày; bộ lọc có thể được sao chép thành liên kết chia sẻ.
+- Có thể sao chép lịch, tải CSV hoặc in lịch đang hiển thị.
+- Nhấn **Nhập Excel** để xem trước file và xác nhận trước khi thay toàn bộ dữ liệu hiện có trong database.
 - Nhấn **Góp ý** ở cuối trang để gửi đề xuất hoặc báo lỗi; nội dung sẽ được tạo thành GitHub Issue công khai trong repository `cusc-ntuan/TKB_LTT`. Không gửi thông tin cá nhân hoặc dữ liệu nhạy cảm trong góp ý.
 
 Để bật tính năng góp ý, cấu hình secret `GITHUB_FEEDBACK_TOKEN` trên môi trường triển khai. Dùng fine-grained personal access token chỉ cấp quyền **Issues: Read and write** cho repository `cusc-ntuan/TKB_LTT`. Token chỉ được dùng phía server và không được đưa vào mã frontend.
@@ -57,6 +58,8 @@ Các truy vấn đọc lặp lại được cache trong bộ nhớ server để 
 Footer hiển thị số phiên đang trực tuyến dựa trên heartbeat mỗi 30 giây. Phiên không gửi heartbeat trong 90 giây sẽ được loại khỏi bộ đếm. Nếu biến môi trường `VERCEL_ANALYTICS_TOTAL` (hoặc `VERCEL_TOTAL_VISITORS`, `VERCEL_VISITOR_COUNT`, `VERCEL_VIEWERS_TOTAL`) được đặt trên Vercel, ứng dụng còn hiển thị số người đã từng xem trong footer. Nếu chưa cấu hình, nhãn sẽ là `—` để tránh hiển thị sai số.
 
 ## File Excel
+
+Trang nhập hỗ trợ workbook `.xlsx` và file `.csv`; định dạng Excel `.xls` cũ cần được lưu lại thành `.xlsx` hoặc `.csv` trước khi nhập.
 
 Workbook có thể chứa sheet lịch chi tiết theo học sinh hoặc sheet ma trận theo lớp. Ứng dụng ưu tiên sheet có đủ `Họ và Tên`, `Lớp`, `Thứ` và `Tiết`; nếu không có, ứng dụng sẽ đọc sheet ma trận `Thứ`/`Buổi`/`Tiết`:
 
@@ -82,6 +85,8 @@ Nhấn **Nhập Excel** trên website để thay toàn bộ dữ liệu trong da
 | GET | `/api/stats` | Thống kê số tiết, lớp, giáo viên và phòng |
 | GET | `/api/filters` | Danh sách giá trị dùng cho bộ lọc |
 | GET | `/api/lessons` | Lấy thời khóa biểu theo query filter |
+| GET | `/api/data-status` | Thời điểm nhập dữ liệu thời khóa biểu gần nhất |
+| POST | `/api/import/preview` | Phân tích file Excel/CSV và trả bản xem trước, không ghi database |
 | POST | `/api/import` | Nhập file Excel/CSV với field `file` |
 | POST | `/api/presence` | Cập nhật heartbeat và nhận số phiên trực tuyến |
 | POST | `/api/feedback` | Tạo GitHub Issue từ góp ý gửi qua website |

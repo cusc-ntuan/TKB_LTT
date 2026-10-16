@@ -10,7 +10,7 @@ process.env.NODE_ENV = "test";
 process.env.TURSO_DATABASE_URL = pathToFileURL(path.join(testDataDir, "timetable.db")).href;
 process.env.TURSO_AUTH_TOKEN = "";
 
-const { filters, listLessons, stats } = await import("../src/lib/db.js");
+const { dataStatus, filters, listLessons, replaceAll, stats } = await import("../src/lib/db.js");
 
 test.after(() => {
   fs.rmSync(testDataDir, { recursive: true, force: true });
@@ -51,4 +51,20 @@ test("returns filter values for the frontend", async () => {
   assert.ok(availableFilters.giao_vien.length > 0);
   assert.ok(Array.isArray(availableFilters.ho_va_ten));
   assert.ok(availableFilters.buoi.includes("Sáng"));
+});
+
+test("records successful imports and preserves timetable data after an empty import", async () => {
+  const lesson = (await listLessons({ lop: "10A" }))[0];
+  assert.ok(lesson);
+  const startedAt = Date.now();
+
+  await replaceAll([lesson]);
+
+  const status = await dataStatus();
+  assert.ok(new Date(status.updatedAt).getTime() >= startedAt);
+  await assert.rejects(
+    replaceAll([]),
+    /không có dòng thời khóa biểu hợp lệ/
+  );
+  assert.equal((await stats()).total, 1);
 });

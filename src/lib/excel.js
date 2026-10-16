@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { Readable } from "node:stream";
 
 const FIELD_ALIASES = {
   ho_va_ten: ["ho va ten", "ho_va_ten", "hoten", "ho ten", "ten", "name", "student", "hoc sinh"],
@@ -178,9 +179,15 @@ function parseClassMatrix(sheet) {
   return rows;
 }
 
-async function parseExcelBuffer(buffer) {
+async function parseExcelBuffer(buffer, filename = "") {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  if (/\.csv$/i.test(filename)) {
+    await workbook.csv.read(Readable.from(buffer));
+  } else if (/\.xls$/i.test(filename)) {
+    throw new Error("Định dạng .xls cũ chưa được hỗ trợ. Hãy lưu file thành .xlsx hoặc .csv.");
+  } else {
+    await workbook.xlsx.load(buffer);
+  }
 
   let rows;
   let mapping;
