@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import { Readable } from "node:stream";
-import { normalizeHeader, normalizeLesson } from "./normalization.js";
+import { normalizeHeader, normalizeLesson } from "./utils.js";
 
 const FIELD_ALIASES = {
   ho_va_ten: ["ho va ten", "ho_va_ten", "hoten", "ho ten", "ten", "name", "student", "hoc sinh"],

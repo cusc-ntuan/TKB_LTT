@@ -50,8 +50,8 @@ Chạy kiểm thử bằng `npm test`.
 - Chọn chế độ xem theo lớp, giáo viên hoặc học sinh trực tiếp trên trang chính.
 - Nút **Hôm nay** mở lịch trong ngày; bộ lọc có thể được sao chép thành liên kết chia sẻ.
 - Có thể sao chép lịch, tải CSV hoặc in lịch đang hiển thị.
-- Tại `/upload`, dùng **Nhập Excel** để xem trước file và xác nhận trước khi thay toàn bộ dữ liệu hiện có trong database.
-- Tại `/upload`, dùng **Nhập JSON** hoặc mở `/import` để nhập URL thư mục dữ liệu (hoặc URL `versions.json`), chọn phiên bản do trường phát hành, xem trước và xác nhận thay toàn bộ dữ liệu. URL nguồn phải dùng HTTPS và trỏ đến máy chủ công khai; ngày áp dụng lấy từ metadata của phiên bản.
+- Tại `/import`, nhấn **Nhập dữ liệu** rồi chọn nhập từ file Excel/CSV hoặc JSON. Cả hai cách đều xem trước và xác nhận trước khi thay toàn bộ dữ liệu hiện có trong database.
+- Khi nhập JSON, nhập URL thư mục dữ liệu (hoặc URL `versions.json`), chọn phiên bản do trường phát hành. URL nguồn phải dùng HTTPS và trỏ đến máy chủ công khai; ngày áp dụng lấy từ metadata của phiên bản.
 - Nhấn **Góp ý** ở cuối trang để gửi đề xuất hoặc báo lỗi; nội dung sẽ được tạo thành GitHub Issue công khai trong repository `cusc-ntuan/TKB_LTT`. Không gửi thông tin cá nhân hoặc dữ liệu nhạy cảm trong góp ý.
 
 Để bật tính năng góp ý, cấu hình secret `GITHUB_FEEDBACK_TOKEN` trên môi trường triển khai. Dùng fine-grained personal access token chỉ cấp quyền **Issues: Read and write** cho repository `cusc-ntuan/TKB_LTT`. Token chỉ được dùng phía server và không được đưa vào mã frontend.

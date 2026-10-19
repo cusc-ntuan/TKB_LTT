@@ -3,8 +3,11 @@ import { lookup } from 'node:dns/promises';
 import { BlockList, isIP } from 'node:net';
 import { parseExcelBuffer } from '../lib/excel.js';
 import { replaceAll } from '../lib/db.js';
-import { normalizeSchoolTimetable } from '../lib/normalization.js';
-import { schoolDateToISO } from '../lib/json.js';
+import {
+  decodeUploadFilename,
+  normalizeSchoolTimetable,
+  schoolDateToISO,
+} from '../lib/utils.js';
 
 const SCHOOL_VERSION_ID_PATTERN = /^v\d+$/;
 const PRIVATE_IPV4_NETWORKS = new BlockList();
@@ -60,7 +63,7 @@ function summarizeRows(rows) {
     classCount: classes.length,
     dayCount: days.length,
     classes: classes.slice(0, 8),
-    sample: rows.slice(0, 5),
+    sample: rows.slice(0, 8),
   };
 }
 
@@ -149,7 +152,7 @@ async function loadSchoolVersion(baseUrl, versionId) {
   ]);
   const rows = normalizeSchoolTimetable({ classes, teachers, students });
   const summary = summarizeRows(rows);
-  const studentSamples = rows.filter((row) => row.ho_va_ten).slice(0, 5);
+  const studentSamples = rows.filter((row) => row.ho_va_ten).slice(0, 8);
   return {
     version: {
       id: version.id,
@@ -223,9 +226,10 @@ function registerImportRoutes(app) {
       if (!req.file) {
         return res.status(400).json({ error: 'Chưa chọn file Excel.' });
       }
-      const rows = await parseExcelBuffer(req.file.buffer, req.file.originalname);
+      const filename = decodeUploadFilename(req.file.originalname);
+      const rows = await parseExcelBuffer(req.file.buffer, filename);
       res.json({
-        filename: req.file.originalname,
+        filename,
         ...summarizeRows(rows),
       });
     } catch (err) {
@@ -248,7 +252,8 @@ function registerImportRoutes(app) {
 
       const startedAt = Date.now();
       console.info('[database] Bắt đầu nhập dữ liệu');
-      const rows = await parseExcelBuffer(req.file.buffer, req.file.originalname);
+      const filename = decodeUploadFilename(req.file.originalname);
+      const rows = await parseExcelBuffer(req.file.buffer, filename);
       summarizeRows(rows);
       stage = 'write';
       const result = await replaceAll(rows, req.body.effectiveDate);
@@ -258,7 +263,7 @@ function registerImportRoutes(app) {
       });
       res.json({
         ...result,
-        filename: req.file.originalname,
+        filename,
         effectiveDate: req.body.effectiveDate,
         message: `Đã nhập ${result.imported} dòng vào database.`,
       });

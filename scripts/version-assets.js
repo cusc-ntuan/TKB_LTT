@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
-const htmlPaths = ['index.html', 'import.html'].map((file) => path.join(publicDir, file));
+const htmlPaths = ['index.html'].map((file) => path.join(publicDir, file));
 const now = new Date();
 const fallbackVersion = [
   String(now.getFullYear()),

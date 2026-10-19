@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeSchoolTimetable } from "../src/lib/normalization.js";
-import { schoolDateToISO } from "../src/lib/json.js";
+import { normalizeSchoolTimetable, schoolDateToISO } from "../src/lib/utils.js";
 
 test("normalizes class, teacher, and student JSON schedules", () => {
   const rows = normalizeSchoolTimetable({

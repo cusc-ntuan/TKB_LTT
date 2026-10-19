@@ -40,13 +40,9 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 
-const uploadEl = $("file");
-const schoolImportLink = document.querySelector(".school-import-link");
-const isUploadPage = window.location.pathname === "/upload";
-if (uploadEl && uploadEl.closest(".upload")) {
-  uploadEl.closest(".upload").hidden = !isUploadPage;
-}
-if (schoolImportLink) schoolImportLink.hidden = !isUploadPage;
+const isImportPage = window.location.pathname === "/import";
+const openImportButton = $("open-import");
+if (openImportButton) openImportButton.hidden = !isImportPage;
 
 function dayRank(value) {
   const i = DAY_ORDER.findIndex((d) => d.toLowerCase() === String(value).toLowerCase());
@@ -660,24 +656,52 @@ if (searchEl) {
 
 const fileEl = $("file");
 let pendingImportFile;
-const importPreviewDialog = $("import-preview-dialog");
 const importPreviewForm = $("import-preview-form");
 const importPreviewStatus = $("import-preview-status");
 const confirmImportBtn = $("confirm-import");
 const effectiveDateInput = $("import-effective-date");
+const previewExcelButton = $("preview-excel-import");
+const importNotice = $("import-notice");
+const importStatus = $("import-status");
+const importWarning = $("import-warning");
+let hasValidImportPreview = false;
 if (effectiveDateInput) effectiveDateInput.value = localDateInputValue();
 
-function closeImportPreview() {
-  pendingImportFile = null;
-  importPreviewDialog?.close();
+function updateImportNotice() {
+  importNotice.hidden = importStatus.hidden && importWarning.hidden;
 }
 
-function renderImportPreview(preview) {
+function setImportStatus(source, message, isError = false) {
+  if (source !== importSourceSelect.value) return;
+  importStatus.textContent = message;
+  importStatus.hidden = !message;
+  importStatus.classList.toggle("error", isError);
+  updateImportNotice();
+}
+
+function invalidateImportPreview() {
+  hasValidImportPreview = false;
+  confirmImportBtn.disabled = true;
+  importPreviewForm.hidden = true;
+  importWarning.hidden = true;
+  updateImportNotice();
+}
+
+function renderImportPreview(preview, effectiveDate) {
   const summary = $("import-preview-summary");
+  const effectiveDateSummary = $("import-preview-effective-date");
   const sample = $("import-preview-sample");
+  const sourceName = preview.filename
+    || `${preview.version.label} (${preview.version.id})`;
   if (summary) {
-    const classes = preview.classes.length ? ` Lớp: ${preview.classes.join(", ")}${preview.classCount > preview.classes.length ? ", …" : ""}.` : "";
-    summary.textContent = `${preview.filename}: ${preview.rowCount} dòng, ${preview.classCount} lớp, ${preview.dayCount} ngày.${classes}`;
+    summary.textContent = `Dữ liệu ${sourceName} có ${preview.rowCount} dòng.`;
+  }
+  if (effectiveDateSummary) {
+    const date = preview.version?.effectiveDate || effectiveDate;
+    const formattedDate = date
+      ? new Date(`${date}T00:00:00`).toLocaleDateString("vi-VN")
+      : preview.version?.date;
+    effectiveDateSummary.textContent = formattedDate ? `Ngày áp dụng: ${formattedDate}.` : "";
   }
   if (sample) {
     sample.replaceChildren();
@@ -693,46 +717,249 @@ function renderImportPreview(preview) {
   }
 }
 
-if (fileEl) {
-  fileEl.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    const body = new FormData();
-    body.append("file", file);
-    try {
-      showFlash("Đang phân tích file để xem trước…");
-      const preview = await fetchJSON("/api/import/preview", { method: "POST", body });
-      pendingImportFile = file;
-      renderImportPreview(preview);
-      if (importPreviewStatus) importPreviewStatus.textContent = "";
-      importPreviewDialog?.showModal();
-      showFlash("");
-    } catch (err) {
-      showFlash(err.message, true);
+fileEl?.addEventListener("change", () => {
+  pendingImportFile = fileEl.files[0] || null;
+  invalidateImportPreview();
+  updateImportSourceControls();
+  setImportStatus("excel", "");
+});
+
+previewExcelButton?.addEventListener("click", async () => {
+  if (!pendingImportFile) {
+    setImportStatus("excel", "Vui lòng chọn file Excel/CSV.");
+    return;
+  }
+  if (!effectiveDateInput.reportValidity()) return;
+
+  invalidateImportPreview();
+  isExcelPreviewLoading = true;
+  updateImportSourceControls();
+  setImportStatus("excel", "Đang phân tích file để xem trước…");
+  const body = new FormData();
+  body.append("file", pendingImportFile);
+  try {
+    const preview = await fetchJSON("/api/import/preview", { method: "POST", body });
+    if (importSourceSelect.value !== "excel") return;
+    renderImportPreview(preview, effectiveDateInput.value);
+    importPreviewStatus.textContent = "";
+    hasValidImportPreview = true;
+    confirmImportBtn.disabled = false;
+    importPreviewForm.hidden = false;
+    setImportStatus("excel", "");
+    importWarning.hidden = false;
+    updateImportNotice();
+  } catch (error) {
+    setImportStatus("excel", error.message, true);
+    if (importSourceSelect.value === "excel") showFlash(error.message, true);
+  } finally {
+    isExcelPreviewLoading = false;
+    updateImportSourceControls();
+  }
+});
+
+const importOptionsDialog = $("import-options-dialog");
+const importSourceSelect = $("import-source");
+const importSourceTabs = [
+  { button: $("excel-import-tab"), panel: $("excel-import-source"), value: "excel" },
+  { button: $("json-import-tab"), panel: $("json-import-source"), value: "json" },
+].filter((tab) => tab.button && tab.panel);
+const schoolDataUrl = $("school-data-url");
+const schoolVersionSelect = $("school-version");
+const loadSchoolPreviewButton = $("load-school-preview");
+let currentSchoolPreview;
+let isExcelPreviewLoading = false;
+let isSchoolPreviewLoading = false;
+let isSchoolVersionsLoading = false;
+
+function updateImportSourceControls() {
+  previewExcelButton.disabled = importSourceSelect.value !== "excel"
+    || !pendingImportFile
+    || isExcelPreviewLoading;
+  loadSchoolPreviewButton.disabled =
+    importSourceSelect.value !== "json"
+    || !schoolVersionSelect.value
+    || schoolVersionSelect.disabled
+    || isSchoolPreviewLoading
+    || isSchoolVersionsLoading;
+}
+
+function setImportSource(source, focusTab = false) {
+  importSourceSelect.value = source;
+  for (const tab of importSourceTabs) {
+    const selected = tab.value === source;
+    tab.button.setAttribute("aria-selected", String(selected));
+    tab.button.tabIndex = selected ? 0 : -1;
+    tab.panel.hidden = !selected;
+    if (selected && focusTab) tab.button.focus();
+  }
+  importSourceSelect.dispatchEvent(new Event("change"));
+}
+
+for (const [index, tab] of importSourceTabs.entries()) {
+  tab.button.addEventListener("click", () => setImportSource(tab.value));
+  tab.button.addEventListener("keydown", (event) => {
+    const direction = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+    const targetIndex = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? importSourceTabs.length - 1
+        : (index + direction + importSourceTabs.length) % importSourceTabs.length;
+    if (direction || event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      setImportSource(importSourceTabs[targetIndex].value, true);
     }
   });
 }
 
-if (importPreviewForm && importPreviewDialog && importPreviewStatus && confirmImportBtn && effectiveDateInput) {
-  $("close-import-preview")?.addEventListener("click", closeImportPreview);
-  $("cancel-import-preview")?.addEventListener("click", closeImportPreview);
-  importPreviewDialog.addEventListener("close", () => { pendingImportFile = null; });
+openImportButton?.addEventListener("click", () => {
+  pendingImportFile = null;
+  fileEl.value = "";
+  setImportStatus("excel", "");
+  setImportSource("excel");
+  invalidateImportPreview();
+  invalidateSchoolPreview();
+  updateImportSourceControls();
+  importOptionsDialog?.showModal();
+});
+$("back-import-options")?.addEventListener("click", () => importOptionsDialog?.close());
+importSourceSelect?.addEventListener("change", () => {
+  invalidateSchoolPreview();
+  setImportStatus(importSourceSelect.value, "");
+  updateImportSourceControls();
+});
+
+function invalidateSchoolPreview() {
+  currentSchoolPreview = null;
+  invalidateImportPreview();
+  setImportStatus("json", "");
+}
+
+schoolVersionSelect?.addEventListener("change", () => {
+  invalidateSchoolPreview();
+  updateImportSourceControls();
+});
+effectiveDateInput?.addEventListener("change", () => {
+  invalidateImportPreview();
+});
+schoolDataUrl?.addEventListener("input", () => {
+  invalidateSchoolPreview();
+  schoolVersionSelect.replaceChildren(new Option("Nhập URL để tải phiên bản", ""));
+  schoolVersionSelect.disabled = true;
+  updateImportSourceControls();
+  setImportStatus("json", schoolDataUrl.value.trim()
+    ? "Nhấn Enter hoặc rời khỏi ô URL để tải danh sách phiên bản."
+    : "Nhập URL dữ liệu của trường.");
+});
+
+async function loadSchoolVersions() {
+  if (!schoolDataUrl.value.trim()) {
+    schoolVersionSelect.replaceChildren(new Option("Nhập URL để tải phiên bản", ""));
+    schoolVersionSelect.disabled = true;
+    updateImportSourceControls();
+    setImportStatus("json", "Nhập URL dữ liệu của trường.");
+    return;
+  }
+  schoolVersionSelect.disabled = true;
+  isSchoolVersionsLoading = true;
+  updateImportSourceControls();
+  setImportStatus("json", "Đang tải danh sách phiên bản…");
+  try {
+    const { versions } = await fetchJSON(
+      `/api/import/versions?baseUrl=${encodeURIComponent(schoolDataUrl.value)}`
+    );
+    schoolVersionSelect.replaceChildren();
+    for (const version of versions) {
+      const option = document.createElement("option");
+      option.value = version.id;
+      option.textContent = `${version.label} (${version.id}) · ${version.date}`;
+      option.selected = version.default;
+      schoolVersionSelect.append(option);
+    }
+    if (!versions.some((version) => version.default)) schoolVersionSelect.selectedIndex = 0;
+    schoolVersionSelect.disabled = false;
+    setImportStatus("json", "");
+  } catch (error) {
+    schoolVersionSelect.replaceChildren(new Option("Không tải được phiên bản", ""));
+    setImportStatus("json", error.message, true);
+  } finally {
+    isSchoolVersionsLoading = false;
+    updateImportSourceControls();
+  }
+}
+
+schoolDataUrl?.addEventListener("change", loadSchoolVersions);
+schoolDataUrl?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    loadSchoolVersions();
+  }
+});
+
+loadSchoolPreviewButton?.addEventListener("click", async () => {
+  currentSchoolPreview = null;
+  isSchoolPreviewLoading = true;
+  updateImportSourceControls();
+  schoolVersionSelect.disabled = true;
+  invalidateImportPreview();
+  setImportStatus("json", "Đang tải và kiểm tra dữ liệu…");
+  try {
+    currentSchoolPreview = await fetchJSON(
+      `/api/import/preview?baseUrl=${encodeURIComponent(schoolDataUrl.value)}&version=${encodeURIComponent(schoolVersionSelect.value)}`
+    );
+    if (importSourceSelect.value !== "json") return;
+    renderImportPreview(currentSchoolPreview, currentSchoolPreview.version.effectiveDate);
+    setImportStatus("json", "");
+    importPreviewStatus.textContent = "";
+    hasValidImportPreview = true;
+    confirmImportBtn.disabled = false;
+    importPreviewForm.hidden = false;
+    importWarning.hidden = false;
+    updateImportNotice();
+  } catch (error) {
+    setImportStatus("json", error.message, true);
+  } finally {
+    schoolVersionSelect.disabled = false;
+    isSchoolPreviewLoading = false;
+    updateImportSourceControls();
+  }
+});
+
+if (importPreviewForm && importPreviewStatus && confirmImportBtn && effectiveDateInput) {
+  importOptionsDialog.addEventListener("close", () => {
+    pendingImportFile = null;
+    currentSchoolPreview = null;
+    invalidateImportPreview();
+    fileEl.value = "";
+    previewExcelButton.disabled = true;
+  });
   importPreviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!pendingImportFile) {
+    if (!hasValidImportPreview || (!pendingImportFile && !currentSchoolPreview)) {
       importPreviewStatus.textContent = "Không còn file để nhập. Vui lòng chọn lại file.";
       return;
     }
-    const body = new FormData();
-    body.append("file", pendingImportFile);
-    body.append("effectiveDate", effectiveDateInput.value);
     importPreviewStatus.textContent = "Đang thay thế dữ liệu…";
     confirmImportBtn.disabled = true;
     try {
-      const result = await fetchJSON("/api/import", { method: "POST", body });
-      updateEffectiveDate(result.effectiveDate);
-      importPreviewDialog.close();
+      let result;
+      if (currentSchoolPreview) {
+        result = await fetchJSON("/api/import/json", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            baseUrl: schoolDataUrl.value,
+            version: currentSchoolPreview.version.id,
+          }),
+        });
+        updateEffectiveDate(result.version.effectiveDate);
+      } else {
+        const body = new FormData();
+        body.append("file", pendingImportFile);
+        body.append("effectiveDate", effectiveDateInput.value);
+        result = await fetchJSON("/api/import", { method: "POST", body });
+        updateEffectiveDate(result.effectiveDate);
+      }
+      importOptionsDialog.close();
       showFlash(result.message);
       await Promise.all([loadStats(), loadFilters()]);
       await loadLessons();
@@ -740,7 +967,7 @@ if (importPreviewForm && importPreviewDialog && importPreviewStatus && confirmIm
       importPreviewStatus.textContent = error.message;
       showFlash(error.message, true);
     } finally {
-      confirmImportBtn.disabled = false;
+      confirmImportBtn.disabled = !hasValidImportPreview;
     }
   });
 }
