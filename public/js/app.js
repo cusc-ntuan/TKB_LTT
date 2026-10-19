@@ -16,6 +16,7 @@ const PALETTE = [
 
 const FILTER_STORAGE_KEY = "tkb-filters";
 const PRESENCE_STORAGE_KEY = "tkb-client-id";
+const SCHOOL_IMPORT_CACHE_KEY = "tkb-school-import-cache";
 const PULL_REFRESH_THRESHOLD = 72;
 const sharedParams = new URLSearchParams(window.location.search);
 let lessonsRequestId = 0;
@@ -770,6 +771,56 @@ let currentSchoolPreview;
 let isExcelPreviewLoading = false;
 let isSchoolPreviewLoading = false;
 let isSchoolVersionsLoading = false;
+let schoolVersionsRequestId = 0;
+
+function readSchoolImportCache() {
+  try {
+    const cache = JSON.parse(localStorage.getItem(SCHOOL_IMPORT_CACHE_KEY) || "null");
+    if (!cache || typeof cache.baseUrl !== "string" || !Array.isArray(cache.versions)
+      || !cache.versions.every((version) =>
+        version && typeof version.id === "string"
+        && typeof version.label === "string"
+        && typeof version.date === "string"
+      )) return null;
+    return cache;
+  } catch {
+    return null;
+  }
+}
+
+function saveSchoolImportCache(baseUrl, versions, selectedVersion = "") {
+  try {
+    localStorage.setItem(SCHOOL_IMPORT_CACHE_KEY, JSON.stringify({
+      baseUrl,
+      versions,
+      selectedVersion,
+    }));
+  } catch {
+    return;
+  }
+}
+
+function renderSchoolVersions(versions, selectedVersion = "") {
+  const selected = versions.find((version) => version.id === selectedVersion)
+    || versions.find((version) => version.default)
+    || versions[0];
+  schoolVersionSelect.replaceChildren();
+  for (const version of versions) {
+    const option = document.createElement("option");
+    option.value = version.id;
+    option.textContent = `${version.label} (${version.id}) · ${version.date}`;
+    option.selected = version === selected;
+    schoolVersionSelect.append(option);
+  }
+  schoolVersionSelect.disabled = versions.length === 0;
+}
+
+function restoreSchoolImportCache() {
+  const cache = readSchoolImportCache();
+  if (!cache || !cache.baseUrl.trim()) return;
+  schoolDataUrl.value = cache.baseUrl;
+  renderSchoolVersions(cache.versions, cache.selectedVersion);
+}
 
 function updateImportSourceControls() {
   previewExcelButton.disabled = importSourceSelect.value !== "excel"
@@ -837,14 +888,25 @@ function invalidateSchoolPreview() {
 schoolVersionSelect?.addEventListener("change", () => {
   invalidateSchoolPreview();
   updateImportSourceControls();
+  const cache = readSchoolImportCache();
+  if (cache?.baseUrl === schoolDataUrl.value.trim()) {
+    saveSchoolImportCache(cache.baseUrl, cache.versions, schoolVersionSelect.value);
+  }
 });
 effectiveDateInput?.addEventListener("change", () => {
   invalidateImportPreview();
 });
 schoolDataUrl?.addEventListener("input", () => {
+  schoolVersionsRequestId += 1;
+  isSchoolVersionsLoading = false;
   invalidateSchoolPreview();
-  schoolVersionSelect.replaceChildren(new Option("Nhập URL để tải phiên bản", ""));
-  schoolVersionSelect.disabled = true;
+  const cache = readSchoolImportCache();
+  if (cache?.baseUrl === schoolDataUrl.value.trim()) {
+    renderSchoolVersions(cache.versions, cache.selectedVersion);
+  } else {
+    schoolVersionSelect.replaceChildren(new Option("Nhập URL để tải phiên bản", ""));
+    schoolVersionSelect.disabled = true;
+  }
   updateImportSourceControls();
   setImportStatus("json", schoolDataUrl.value.trim()
     ? "Nhấn Enter hoặc rời khỏi ô URL để tải danh sách phiên bản."
@@ -852,38 +914,42 @@ schoolDataUrl?.addEventListener("input", () => {
 });
 
 async function loadSchoolVersions() {
-  if (!schoolDataUrl.value.trim()) {
+  const baseUrl = schoolDataUrl.value.trim();
+  if (!baseUrl) {
     schoolVersionSelect.replaceChildren(new Option("Nhập URL để tải phiên bản", ""));
     schoolVersionSelect.disabled = true;
     updateImportSourceControls();
     setImportStatus("json", "Nhập URL dữ liệu của trường.");
     return;
   }
+  const requestId = ++schoolVersionsRequestId;
   schoolVersionSelect.disabled = true;
   isSchoolVersionsLoading = true;
   updateImportSourceControls();
   setImportStatus("json", "Đang tải danh sách phiên bản…");
   try {
     const { versions } = await fetchJSON(
-      `/api/import/versions?baseUrl=${encodeURIComponent(schoolDataUrl.value)}`
+      `/api/import/versions?baseUrl=${encodeURIComponent(baseUrl)}`
     );
-    schoolVersionSelect.replaceChildren();
-    for (const version of versions) {
-      const option = document.createElement("option");
-      option.value = version.id;
-      option.textContent = `${version.label} (${version.id}) · ${version.date}`;
-      option.selected = version.default;
-      schoolVersionSelect.append(option);
-    }
-    if (!versions.some((version) => version.default)) schoolVersionSelect.selectedIndex = 0;
-    schoolVersionSelect.disabled = false;
+    if (requestId !== schoolVersionsRequestId || schoolDataUrl.value.trim() !== baseUrl) return;
+    renderSchoolVersions(versions);
+    saveSchoolImportCache(baseUrl, versions, schoolVersionSelect.value);
     setImportStatus("json", "");
   } catch (error) {
-    schoolVersionSelect.replaceChildren(new Option("Không tải được phiên bản", ""));
+    if (requestId !== schoolVersionsRequestId || schoolDataUrl.value.trim() !== baseUrl) return;
+    const cache = readSchoolImportCache();
+    if (cache?.baseUrl === baseUrl) {
+      renderSchoolVersions(cache.versions, cache.selectedVersion);
+    } else {
+      schoolVersionSelect.replaceChildren(new Option("Không tải được phiên bản", ""));
+      schoolVersionSelect.disabled = true;
+    }
     setImportStatus("json", error.message, true);
   } finally {
-    isSchoolVersionsLoading = false;
-    updateImportSourceControls();
+    if (requestId === schoolVersionsRequestId) {
+      isSchoolVersionsLoading = false;
+      updateImportSourceControls();
+    }
   }
 }
 
@@ -894,6 +960,8 @@ schoolDataUrl?.addEventListener("keydown", (event) => {
     loadSchoolVersions();
   }
 });
+
+restoreSchoolImportCache();
 
 loadSchoolPreviewButton?.addEventListener("click", async () => {
   currentSchoolPreview = null;
