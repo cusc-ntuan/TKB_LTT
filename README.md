@@ -91,7 +91,7 @@ Nhấn **Nhập Excel** trên website để thay toàn bộ dữ liệu trong da
 | GET | `/api/data-status` | Thời điểm nhập dữ liệu thời khóa biểu gần nhất |
 | GET | `/api/import/versions?baseUrl=https://URL/data` | Danh sách phiên bản JSON từ URL trường |
 | GET | `/api/import/preview?baseUrl=https://URL/data&version=v11` | Xem trước dữ liệu JSON của phiên bản |
-| POST | `/api/import/json` | Nhập phiên bản JSON với body `{ "baseUrl": "https://URL/data", "version": "v11" }` |
+| POST | `/api/import/json` | Nhập phiên bản JSON với body `{ "baseUrl": "https://URL/data", "version": "v1" }` |
 | POST | `/api/import/preview` | Phân tích file Excel/CSV và trả bản xem trước, không ghi database |
 | POST | `/api/import` | Nhập file Excel/CSV với field `file` |
 | POST | `/api/presence` | Cập nhật heartbeat và nhận số phiên trực tuyến |

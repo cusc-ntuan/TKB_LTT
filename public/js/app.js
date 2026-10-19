@@ -368,7 +368,7 @@ function updateEntitySelect() {
 
   const values = state.filters?.[state.mode] || [];
   const current = savedFilters.entityByMode?.[state.mode] || $("entity")?.value || "";
-  const defaultValue = values.includes(current) ? current : (values[0] || "");
+  const defaultValue = values.includes(current) ? current : "";
 
   if (!savedFilters.entityByMode) savedFilters.entityByMode = {};
   if (defaultValue && !savedFilters.entityByMode[state.mode]) {
