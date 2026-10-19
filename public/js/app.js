@@ -1,5 +1,7 @@
 import { resolveDefaultDay } from "./utils.js";
 
+const DATE_EFFECTIVE = "19/10/2026";
+
 const DAY_ORDER = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật", "CN"];
 const MODE_LABEL = {
   lop: "Lớp",
@@ -16,6 +18,7 @@ const FILTER_STORAGE_KEY = "tkb-filters";
 const PRESENCE_STORAGE_KEY = "tkb-client-id";
 const PULL_REFRESH_THRESHOLD = 72;
 const sharedParams = new URLSearchParams(window.location.search);
+let lessonsRequestId = 0;
 
 const savedFilters = (() => {
   try {
@@ -38,9 +41,12 @@ const state = {
 const $ = (id) => document.getElementById(id);
 
 const uploadEl = $("file");
+const schoolImportLink = document.querySelector(".school-import-link");
+const isUploadPage = window.location.pathname === "/upload";
 if (uploadEl && uploadEl.closest(".upload")) {
-  uploadEl.closest(".upload").hidden = window.location.pathname !== "/upload";
+  uploadEl.closest(".upload").hidden = !isUploadPage;
 }
+if (schoolImportLink) schoolImportLink.hidden = !isUploadPage;
 
 function dayRank(value) {
   const i = DAY_ORDER.findIndex((d) => d.toLowerCase() === String(value).toLowerCase());
@@ -275,6 +281,34 @@ async function updateAnalytics() {
   }
 }
 
+function localDateInputValue() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+function updateEffectiveDate(value) {
+  const date = value ? value.split("-").reverse().join("/") : "";
+  const effectiveDateValueEl = $("effective-date-value");
+  if (effectiveDateValueEl) {
+    effectiveDateValueEl.textContent = date || DATE_EFFECTIVE;
+  }
+
+  const metaDescriptionEl = document.querySelector('meta[name="description"]');
+  if (metaDescriptionEl) {
+    const description = "Tra cứu thời khóa biểu (TKB) Trường THPT Chuyên Lý Tự Trọng, Cần Thơ.";
+    metaDescriptionEl.setAttribute("content", date ? `${description} Áp dụng từ ${date}.` : description);
+  }
+}
+
+async function loadDataStatus() {
+  const status = await fetchJSON("/api/data-status");
+  updateEffectiveDate(status.effectiveDate);
+  const effectiveDateInput = $("import-effective-date");
+  if (effectiveDateInput) effectiveDateInput.value = status.effectiveDate || localDateInputValue();
+}
+
 async function loadFilters() {
   const urlParams = new URLSearchParams(window.location.search);
   state.filters = await fetchJSON("/api/filters");
@@ -361,7 +395,17 @@ function updateEntitySelect() {
   entityEl.value = defaultValue;
 }
 
+function updatePrintHeading(entity = $("entity")?.value.trim() || "") {
+  const heading = $("print-heading");
+  if (!heading) return;
+  const parts = [MODE_LABEL[state.mode], entity];
+  if (state.view === "day") parts.push(state.day);
+  else parts.push("Cả tuần");
+  heading.textContent = `Thời khóa biểu${entity ? ` ${parts.join(" · ")}` : ""}`;
+}
+
 async function loadLessons() {
+  const requestId = ++lessonsRequestId;
   saveFilters();
   const params = new URLSearchParams();
   const entityEl = $("entity");
@@ -379,18 +423,13 @@ async function loadLessons() {
     return;
   }
 
-  function updatePrintHeading(entity = $("entity")?.value.trim() || "") {
-    const heading = $("print-heading");
-    if (!heading) return;
-    const parts = [MODE_LABEL[state.mode], entity];
-    if (state.view === "day") parts.push(state.day);
-    else parts.push("Cả tuần");
-    heading.textContent = `Thời khóa biểu${entity ? ` ${parts.join(" · ")}` : ""}`;
-  }
   if (entity) params.set(state.mode, entity);
   if (buoi) params.set("buoi", buoi);
   if (q) params.set("q", q);
-  state.lessons = await fetchJSON(`/api/lessons?${params}`);
+  if (state.view === "day" && state.day) params.set("thu", state.day);
+  const lessons = await fetchJSON(`/api/lessons?${params}`);
+  if (requestId !== lessonsRequestId) return;
+  state.lessons = lessons;
   renderBoard();
 }
 
@@ -568,7 +607,7 @@ if (viewControlsEl) {
     saveFilters();
     syncViewControls();
     updatePrintHeading();
-    renderBoard();
+    loadLessons();
   });
 }
 
@@ -595,7 +634,7 @@ if (dayButtons) {
     saveFilters();
     syncViewControls();
     updatePrintHeading();
-    renderBoard();
+    loadLessons();
   });
 }
 
@@ -607,7 +646,7 @@ if (todayBtn) {
     saveFilters();
     syncViewControls();
     updatePrintHeading();
-    renderBoard();
+    loadLessons();
   });
 }
 
@@ -625,6 +664,8 @@ const importPreviewDialog = $("import-preview-dialog");
 const importPreviewForm = $("import-preview-form");
 const importPreviewStatus = $("import-preview-status");
 const confirmImportBtn = $("confirm-import");
+const effectiveDateInput = $("import-effective-date");
+if (effectiveDateInput) effectiveDateInput.value = localDateInputValue();
 
 function closeImportPreview() {
   pendingImportFile = null;
@@ -673,7 +714,7 @@ if (fileEl) {
   });
 }
 
-if (importPreviewForm && importPreviewDialog && importPreviewStatus && confirmImportBtn) {
+if (importPreviewForm && importPreviewDialog && importPreviewStatus && confirmImportBtn && effectiveDateInput) {
   $("close-import-preview")?.addEventListener("click", closeImportPreview);
   $("cancel-import-preview")?.addEventListener("click", closeImportPreview);
   importPreviewDialog.addEventListener("close", () => { pendingImportFile = null; });
@@ -685,10 +726,12 @@ if (importPreviewForm && importPreviewDialog && importPreviewStatus && confirmIm
     }
     const body = new FormData();
     body.append("file", pendingImportFile);
+    body.append("effectiveDate", effectiveDateInput.value);
     importPreviewStatus.textContent = "Đang thay thế dữ liệu…";
     confirmImportBtn.disabled = true;
     try {
       const result = await fetchJSON("/api/import", { method: "POST", body });
+      updateEffectiveDate(result.effectiveDate);
       importPreviewDialog.close();
       showFlash(result.message);
       await Promise.all([loadStats(), loadFilters()]);
@@ -840,6 +883,7 @@ if (pullRefreshEl) {
       updateAnalytics(),
       loadStats(),
       loadFilters(),
+      loadDataStatus(),
     ]);
     await loadLessons();
     showFlash("");

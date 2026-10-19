@@ -31,6 +31,14 @@ test("filters lessons by class", async () => {
   assert.ok(lessons.every((lesson) => lesson.lop === "10A"));
 });
 
+test("filters lessons by selected weekday", async () => {
+  const day = (await filters()).thu[0];
+  const lessons = await listLessons({ thu: day });
+
+  assert.ok(lessons.length > 0);
+  assert.ok(lessons.every((lesson) => lesson.thu === day));
+});
+
 test("filters lessons by student name", async () => {
   const studentName = (await filters()).ho_va_ten[0];
   const lessons = studentName ? await listLessons({ ho_va_ten: studentName }) : [];
@@ -53,15 +61,17 @@ test("returns filter values for the frontend", async () => {
   assert.ok(availableFilters.buoi.includes("Sáng"));
 });
 
-test("records successful imports and preserves timetable data after an empty import", async () => {
+test("records import dates and preserves timetable data after an empty import", async () => {
   const lesson = (await listLessons({ lop: "10A" }))[0];
   assert.ok(lesson);
   const startedAt = Date.now();
+  const effectiveDate = "2026-10-19";
 
-  await replaceAll([lesson]);
+  await replaceAll([lesson], effectiveDate);
 
   const status = await dataStatus();
   assert.ok(new Date(status.updatedAt).getTime() >= startedAt);
+  assert.equal(status.effectiveDate, effectiveDate);
   await assert.rejects(
     replaceAll([]),
     /không có dòng thời khóa biểu hợp lệ/

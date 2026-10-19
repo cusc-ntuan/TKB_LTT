@@ -7,6 +7,10 @@ function registerPageRoutes(app) {
   app.get('/upload', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'public', 'index.html'));
   });
+
+  app.get('/import', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', '..', 'public', 'import.html'));
+  });
 }
 
 export { registerPageRoutes };

@@ -1,6 +1,8 @@
 # Thời khóa biểu
 
-Website xem thời khóa biểu, hỗ trợ nhập dữ liệu từ Excel hoặc CSV.
+Website xem thời khóa biểu, hỗ trợ nhập dữ liệu từ Excel/CSV hoặc đồng bộ JSON từ hệ thống thời khóa biểu của trường.
+
+Trang web: [https://xemtkb.io.vn](https://xemtkb.io.vn)
 
 Mã nguồn công khai: [cusc-ntuan/TKB_LTT](https://github.com/cusc-ntuan/TKB_LTT).
 
@@ -48,7 +50,8 @@ Chạy kiểm thử bằng `npm test`.
 - Chọn chế độ xem theo lớp, giáo viên hoặc học sinh trực tiếp trên trang chính.
 - Nút **Hôm nay** mở lịch trong ngày; bộ lọc có thể được sao chép thành liên kết chia sẻ.
 - Có thể sao chép lịch, tải CSV hoặc in lịch đang hiển thị.
-- Nhấn **Nhập Excel** để xem trước file và xác nhận trước khi thay toàn bộ dữ liệu hiện có trong database.
+- Tại `/upload`, dùng **Nhập Excel** để xem trước file và xác nhận trước khi thay toàn bộ dữ liệu hiện có trong database.
+- Tại `/upload`, dùng **Nhập JSON** hoặc mở `/import` để nhập URL thư mục dữ liệu (hoặc URL `versions.json`), chọn phiên bản do trường phát hành, xem trước và xác nhận thay toàn bộ dữ liệu. URL nguồn phải dùng HTTPS và trỏ đến máy chủ công khai; ngày áp dụng lấy từ metadata của phiên bản.
 - Nhấn **Góp ý** ở cuối trang để gửi đề xuất hoặc báo lỗi; nội dung sẽ được tạo thành GitHub Issue công khai trong repository `cusc-ntuan/TKB_LTT`. Không gửi thông tin cá nhân hoặc dữ liệu nhạy cảm trong góp ý.
 
 Để bật tính năng góp ý, cấu hình secret `GITHUB_FEEDBACK_TOKEN` trên môi trường triển khai. Dùng fine-grained personal access token chỉ cấp quyền **Issues: Read and write** cho repository `cusc-ntuan/TKB_LTT`. Token chỉ được dùng phía server và không được đưa vào mã frontend.
@@ -86,6 +89,9 @@ Nhấn **Nhập Excel** trên website để thay toàn bộ dữ liệu trong da
 | GET | `/api/filters` | Danh sách giá trị dùng cho bộ lọc |
 | GET | `/api/lessons` | Lấy thời khóa biểu theo query filter |
 | GET | `/api/data-status` | Thời điểm nhập dữ liệu thời khóa biểu gần nhất |
+| GET | `/api/import/versions?baseUrl=https://mathx.com.vn/tkb-web/data` | Danh sách phiên bản JSON từ URL trường |
+| GET | `/api/import/preview?baseUrl=https://mathx.com.vn/tkb-web/data&version=v11` | Xem trước dữ liệu JSON của phiên bản |
+| POST | `/api/import/json` | Nhập phiên bản JSON với body `{ "baseUrl": "https://mathx.com.vn/tkb-web/data", "version": "v11" }` |
 | POST | `/api/import/preview` | Phân tích file Excel/CSV và trả bản xem trước, không ghi database |
 | POST | `/api/import` | Nhập file Excel/CSV với field `file` |
 | POST | `/api/presence` | Cập nhật heartbeat và nhận số phiên trực tuyến |

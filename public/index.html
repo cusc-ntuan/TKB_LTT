@@ -29,10 +29,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script>
-    window.TKB_CONFIG = window.TKB_CONFIG || {};
-    window.TKB_CONFIG.effectiveDate = "19/10/2026";
-  </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -133,6 +129,7 @@
       <button id="reload" type="button" aria-label="Tải lại thời khóa biểu">Tải lại</button>
       <button id="open-feedback" type="button">Góp ý</button>
       <button id="print" type="button">In</button>
+      <a class="school-import-link" href="/import" hidden>Nhập JSON</a>
       <label class="upload">
         <input id="file" type="file" accept=".xlsx,.csv" hidden />
         <span>Nhập Excel/CSV</span>
@@ -182,6 +179,8 @@
         <h2 id="import-preview-title">Xem trước dữ liệu nhập</h2>
         <button id="close-import-preview" class="feedback-close" type="button" aria-label="Đóng">×</button>
       </div>
+      <label for="import-effective-date">Ngày áp dụng</label>
+      <input id="import-effective-date" name="effectiveDate" type="date" required />
       <p id="import-preview-summary"></p>
       <div class="import-sample-wrap">
         <table class="import-sample">
@@ -198,21 +197,6 @@
     </form>
   </dialog>
   <script defer src="/_vercel/insights/script.js"></script>
-  <script>
-    const effectiveDate = window.TKB_CONFIG?.effectiveDate || "";
-    const effectiveDateValueEl = document.getElementById("effective-date-value");
-    if (effectiveDateValueEl) {
-      effectiveDateValueEl.textContent = effectiveDate;
-    }
-
-    const metaDescriptionEl = document.querySelector('meta[name="description"]');
-    if (metaDescriptionEl) {
-      metaDescriptionEl.setAttribute(
-        "content",
-        `Tra cứu thời khóa biểu (TKB) Trường THPT Chuyên Lý Tự Trọng, Cần Thơ. Áp dụng từ ${effectiveDate}.`
-      );
-    }
-  </script>
   <script type="module" src="/js/utils.js?v=__ASSET_VERSION__"></script>
   <script type="module" src="/js/app.js?v=__ASSET_VERSION__"></script>
 </body>

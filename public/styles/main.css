@@ -11,6 +11,7 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
+#effective-date-value { font-weight: 700; }
 body {
   font-family: "Be Vietnam Pro", system-ui, sans-serif;
   color: var(--ink);
@@ -68,6 +69,18 @@ body {
 .upload:hover, #reload:hover, #print:hover, #open-feedback:hover, #today:hover, #share-link:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(23, 42, 58, 0.12); }
 #today, #share-link { background: rgba(255, 255, 255, 0.72); color: var(--ink); border: 1px solid var(--line); }
 #today { padding: 8px 12px; }
+.school-import-link {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+.school-import-link[hidden] { display: none; }
 #share-link { display: grid; place-items: center; width: 42px; height: 42px; padding: 8px; }
 .mode-filter > #share-link { flex: 0 0 42px; }
 .share-icon { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -419,6 +432,39 @@ footer {
 }
 .github-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+.school-import-main { padding-top: 8px; }
+.school-import-back { display: inline-block; margin-bottom: 14px; color: var(--accent); font-weight: 600; text-decoration: none; }
+.school-import-card {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.school-import-card h2, .school-import-card h3, .school-import-card p { margin: 0; }
+.school-import-card h2 { font-size: 1.2rem; }
+.school-import-card h3 { font-size: 1rem; }
+.school-import-card > p, #school-preview-summary { color: var(--muted); font-size: 0.86rem; }
+.school-import-card label { font-size: 0.85rem; font-weight: 600; }
+.school-import-controls { display: flex; gap: 10px; }
+.school-import-card > input, .school-import-controls select, .school-import-controls button, #confirm-school-import {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--ink);
+  font: inherit;
+}
+.school-import-card > input { width: 100%; background: #fff; }
+.school-import-controls select { flex: 1; min-width: 0; background: #fff; }
+.school-import-controls button, #confirm-school-import { background: var(--accent); border-color: var(--accent); color: #fff; cursor: pointer; }
+.school-import-controls button:disabled, #confirm-school-import:disabled { cursor: wait; opacity: 0.7; }
+#confirm-school-import { justify-self: start; background: var(--accent-2); border-color: var(--accent-2); }
+#school-import-status { min-height: 1.2em; margin: 0; font-size: 0.86rem; }
+#school-import-status.error { color: #9a3412; }
+
 #feedback-dialog {
   width: min(520px, calc(100% - 32px));
   max-height: calc(100% - 32px);
@@ -439,6 +485,15 @@ footer {
 }
 #import-preview-dialog::backdrop { background: rgba(23, 42, 58, 0.48); }
 #import-preview-form { display: grid; gap: 10px; }
+#import-preview-form label { font-size: 0.85rem; font-weight: 600; }
+#import-preview-form input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  color: var(--ink);
+  font: inherit;
+}
 #import-preview-summary, .import-warning, #import-preview-status { margin: 0; font-size: 0.86rem; }
 .import-warning { color: #9a3412; font-weight: 600; }
 .import-sample-wrap { overflow: auto; max-height: 280px; border: 1px solid var(--line); border-radius: 6px; }
@@ -483,6 +538,7 @@ footer {
   .top-actions { width: 100%; }
   .top-actions { flex-wrap: wrap; }
   .top-actions > * { flex: 1 1 30%; text-align: center; }
+  .school-import-controls { flex-direction: column; }
   .notification-heading { flex-direction: column; }
   .notification-action { width: 100%; }
   footer { align-items: flex-start; flex-direction: column; }

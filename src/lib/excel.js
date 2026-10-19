@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { Readable } from "node:stream";
+import { normalizeHeader, normalizeLesson } from "./normalization.js";
 
 const FIELD_ALIASES = {
   ho_va_ten: ["ho va ten", "ho_va_ten", "hoten", "ho ten", "ten", "name", "student", "hoc sinh"],
@@ -13,17 +14,6 @@ const FIELD_ALIASES = {
   loai_tiet: ["loai tiet", "loai", "type", "hinh thuc"],
   ghi_chu: ["ghi chu", "note", "notes", "ghichu"],
 };
-
-function normalizeHeader(value) {
-  return String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "d")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
 
 function mapHeaders(headers) {
   const mapping = {};
@@ -43,14 +33,6 @@ function cell(row, header) {
   const value = row[header];
   if (value === undefined || value === null) return "";
   return String(value).trim();
-}
-
-function removeRepeatedFinalNameWord(value) {
-  const words = String(value ?? "").trim().split(/\s+/);
-  if (words.length > 1 && words.at(-1).toLocaleLowerCase("vi") === words.at(-2).toLocaleLowerCase("vi")) {
-    words.pop();
-  }
-  return words.join(" ");
 }
 
 function sheetToRows(sheet) {
@@ -235,8 +217,8 @@ async function parseExcelBuffer(buffer, filename = "") {
     if (mapping.ho_va_ten) row[mapping.ho_va_ten] = name;
   }
 
-  const parsedRows = rows.map((row) => ({
-    ho_va_ten: removeRepeatedFinalNameWord(cell(row, mapping.ho_va_ten)),
+  const parsedRows = rows.map((row) => normalizeLesson({
+    ho_va_ten: cell(row, mapping.ho_va_ten),
     lop: cell(row, mapping.lop),
     thu: cell(row, mapping.thu),
     buoi: cell(row, mapping.buoi),

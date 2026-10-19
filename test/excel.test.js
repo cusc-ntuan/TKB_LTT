@@ -47,6 +47,15 @@ test("parses CSV timetable uploads", async () => {
   assert.equal(rows[0].mon_hoc, "Toán");
 });
 
+test("removes a repeated final word from imported student names", async () => {
+  const rows = await parseExcelBuffer(
+    Buffer.from("Họ và Tên,Lớp,Thứ,Buổi,Tiết,Môn Học\nĐặng Như An An,10A1,Thứ 2,Sáng,1,Toán"),
+    "thoi-khoa-bieu.csv"
+  );
+
+  assert.equal(rows[0].ho_va_ten, "Đặng Như An");
+});
+
 test("reports legacy XLS files as unsupported", async () => {
   await assert.rejects(
     parseExcelBuffer(Buffer.from("not an XLSX file"), "schedule.xls"),

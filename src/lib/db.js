@@ -17,9 +17,13 @@ if (!tursoUrl || (!tursoToken && !isTestFileDatabase)) {
 async function dataStatus() {
   await initialize();
   const result = await client.execute({
-    sql: "SELECT value FROM app_metadata WHERE key = 'dataset_updated_at'",
+    sql: "SELECT key, value FROM app_metadata WHERE key IN ('dataset_updated_at', 'effective_date')",
   });
-  return { updatedAt: result.rows[0]?.value || null };
+  const metadata = new Map(result.rows.map(({ key, value }) => [key, value]));
+  return {
+    updatedAt: metadata.get("dataset_updated_at") || null,
+    effectiveDate: metadata.get("effective_date") || null,
+  };
 }
 
 if (!isTestFileDatabase && !/^https:\/\/|^libsql:\/\//.test(tursoUrl)) {
@@ -86,7 +90,7 @@ async function insertRows(transaction, rows) {
   }
 }
 
-async function replaceRows(rows) {
+async function replaceRows(rows, effectiveDate) {
   const transaction = await client.transaction("write");
   try {
     await transaction.execute("DELETE FROM lessons");
@@ -96,6 +100,13 @@ async function replaceRows(rows) {
         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
       args: [new Date().toISOString()],
     });
+    if (effectiveDate) {
+      await transaction.execute({
+        sql: `INSERT INTO app_metadata (key, value) VALUES ('effective_date', ?)
+          ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+        args: [effectiveDate],
+      });
+    }
     await transaction.commit();
   } catch (error) {
     await transaction.rollback();
@@ -129,6 +140,7 @@ async function initialize() {
           value TEXT NOT NULL DEFAULT ''
         )`],
         ["INSERT OR IGNORE INTO app_metadata (key, value) VALUES ('dataset_updated_at', '')"],
+        ["INSERT OR IGNORE INTO app_metadata (key, value) VALUES ('effective_date', '')"],
         ["CREATE INDEX IF NOT EXISTS idx_lessons_lop ON lessons(lop)"],
         ["CREATE INDEX IF NOT EXISTS idx_lessons_gv ON lessons(giao_vien)"],
         ["CREATE INDEX IF NOT EXISTS idx_lessons_phong ON lessons(phong_hoc)"],
@@ -166,12 +178,12 @@ async function initialize() {
   await initialization;
 }
 
-async function replaceAll(rows) {
+async function replaceAll(rows, effectiveDate) {
   await initialize();
   if (!Array.isArray(rows) || rows.length === 0) {
     throw new Error("File không có dòng thời khóa biểu hợp lệ; dữ liệu hiện tại được giữ nguyên.");
   }
-  await replaceRows(rows);
+  await replaceRows(rows, effectiveDate);
   clearCache();
   return { imported: rows.length };
 }
