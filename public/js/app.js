@@ -765,6 +765,7 @@ const importSourceTabs = [
   { button: $("json-import-tab"), panel: $("json-import-source"), value: "json" },
 ].filter((tab) => tab.button && tab.panel);
 const schoolDataUrl = $("school-data-url");
+const reloadSchoolVersionsButton = $("reload-school-versions");
 const schoolVersionSelect = $("school-version");
 const loadSchoolPreviewButton = $("load-school-preview");
 let currentSchoolPreview;
@@ -831,6 +832,10 @@ function updateImportSourceControls() {
     || !schoolVersionSelect.value
     || schoolVersionSelect.disabled
     || isSchoolPreviewLoading
+    || isSchoolVersionsLoading;
+  reloadSchoolVersionsButton.disabled =
+    importSourceSelect.value !== "json"
+    || !schoolDataUrl.value.trim()
     || isSchoolVersionsLoading;
 }
 
@@ -954,6 +959,7 @@ async function loadSchoolVersions() {
 }
 
 schoolDataUrl?.addEventListener("change", loadSchoolVersions);
+reloadSchoolVersionsButton?.addEventListener("click", loadSchoolVersions);
 schoolDataUrl?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
