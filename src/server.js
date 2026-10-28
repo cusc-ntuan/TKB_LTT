@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { config } from "./config.js";
+import { registerAdminRoutes } from "./routes/admin.routes.js";
 import { registerAnalyticsRoutes } from "./routes/analytics.routes.js";
 import { registerFeedbackRoutes } from "./routes/feedback.routes.js";
 import { registerImportRoutes } from "./routes/import.routes.js";
@@ -15,9 +16,11 @@ const HOST = config.host;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.set("trust proxy", 1);
+registerAdminRoutes(app);
 registerPageRoutes(app);
 registerLessonRoutes(app);
 registerPresenceRoutes(app);

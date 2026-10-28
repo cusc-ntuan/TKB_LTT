@@ -129,18 +129,25 @@
       <button id="reload" type="button" aria-label="Tải lại thời khóa biểu">Tải lại</button>
       <button id="open-feedback" type="button">Góp ý</button>
       <button id="print" type="button">In</button>
-      <button id="open-import" class="upload" type="button" hidden>Nhập dữ liệu</button>
     </div>
   </div>
   <footer>
     <span>Thời khóa biểu THPT Chuyên Lý Tự Trọng, Cần Thơ.</span>
     <span>Tạo cho Nguyễn Nam, lớp Chuyên Tin Khoá 37.</span>
-    <a class="github-link" href="https://github.com/cusc-ntuan/TKB_LTT" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-        <path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.56.1.76-.24.76-.54v-2.1c-3.1.67-3.76-1.32-3.76-1.32-.51-1.3-1.24-1.65-1.24-1.65-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15 1 1.7 2.62 1.21 3.26.93.1-.72.39-1.21.71-1.49-2.48-.28-5.09-1.24-5.09-5.52 0-1.22.44-2.21 1.15-2.99-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.55 0c2.11-1.44 3.05-1.14 3.05-1.14.61 1.54.23 2.68.11 2.96.72.78 1.15 1.77 1.15 2.99 0 4.29-2.61 5.24-5.1 5.51.4.35.76 1.03.76 2.08v3.09c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z"/>
-      </svg>
-      GitHub
-    </a>
+    <div class="footer-links">
+      <a class="admin-link" href="/import" aria-label="Quản trị">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+          <path d="M17 9V7A5 5 0 0 0 7 7v2H5.5A1.5 1.5 0 0 0 4 10.5v8A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 18.5 9H17Zm-8 0V7a3 3 0 0 1 6 0v2H9Zm2.5 5.25a1.75 1.75 0 1 1 0-3.5a1.75 1.75 0 0 1 0 3.5Z"/>
+        </svg>
+        Quản trị
+      </a>
+      <a class="github-link" href="https://github.com/cusc-ntuan/TKB_LTT" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+          <path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.56.1.76-.24.76-.54v-2.1c-3.1.67-3.76-1.32-3.76-1.32-.51-1.3-1.24-1.65-1.24-1.65-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15 1 1.7 2.62 1.21 3.26.93.1-.72.39-1.21.71-1.49-2.48-.28-5.09-1.24-5.09-5.52 0-1.22.44-2.21 1.15-2.99-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.55 0c2.11-1.44 3.05-1.14 3.05-1.14.61 1.54.23 2.68.11 2.96.72.78 1.15 1.77 1.15 2.99 0 4.29-2.61 5.24-5.1 5.51.4.35.76 1.03.76 2.08v3.09c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
     <div class="footer-stats">
       <span class="views">Hôm nay: <b id="today-viewers">—</b> / Tổng: <b id="total-viewers">—</b></span>
       <span class="online"><i></i><b id="online-count">0</b> đang trực tuyến</span>
@@ -168,72 +175,6 @@
         <button id="submit-feedback" type="submit">Gửi góp ý</button>
       </div>
     </form>
-  </dialog>
-  <dialog id="import-options-dialog" aria-label="Nhập dữ liệu">
-    <div class="import-options-form">
-      <div id="import-content">
-        <div id="import-inputs">
-          <input id="import-source" type="hidden" />
-          <div class="import-source-tabs" role="tablist" aria-label="Nguồn dữ liệu">
-            <button id="excel-import-tab" type="button" role="tab" aria-selected="false" aria-controls="excel-import-source" tabindex="-1">Excel / CSV</button>
-            <button id="json-import-tab" type="button" role="tab" aria-selected="false" aria-controls="json-import-source" tabindex="-1">JSON</button>
-          </div>
-          <section id="excel-import-source" role="tabpanel" aria-labelledby="excel-import-tab" hidden>
-            <div class="import-field import-file-field">
-              <label for="file">Excel/CSV</label>
-              <input id="file" type="file" accept=".xlsx,.csv" />
-            </div>
-            <div class="import-field import-date-field">
-              <label for="import-effective-date">Ngày áp dụng</label>
-              <input id="import-effective-date" name="effectiveDate" type="date" required />
-            </div>
-            <button id="preview-excel-import" class="import-preview-button" type="button" disabled>Xem trước</button>
-          </section>
-          <section id="json-import-source" role="tabpanel" aria-labelledby="json-import-tab" hidden>
-            <div class="import-field import-url-field">
-              <label for="school-data-url">URL dữ liệu</label>
-              <div class="school-data-url-control">
-                <input id="school-data-url" type="url" placeholder="Nhập URL thư mục dữ liệu hoặc versions.json" autocomplete="url" />
-                <button id="reload-school-versions" class="school-data-url-reload" type="button" aria-label="Tải lại danh sách phiên bản" title="Tải lại danh sách phiên bản">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
-                    <path d="M3 2v6h6" />
-                    <path d="M21 12a9 9 0 0 0-15-6.7L3 8" />
-                    <path d="M21 22v-6h-6" />
-                    <path d="M3 12a9 9 0 0 0 15 6.7l3-2.7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="import-field import-version-field">
-              <label for="school-version">Ngày áp dụng</label>
-              <select id="school-version" disabled>
-                <option value="">Nhập URL để tải phiên bản</option>
-              </select>
-            </div>
-            <button id="load-school-preview" class="import-preview-button" type="button" disabled>Xem trước</button>
-          </section>
-        </div>
-        <form id="import-preview-form" hidden>
-          <p id="import-preview-summary"></p>
-          <p id="import-preview-effective-date"></p>
-          <div class="import-sample-wrap">
-            <table class="import-sample">
-              <thead><tr><th>Thứ</th><th>Buổi</th><th>Tiết</th><th>Lớp</th><th>Môn</th></tr></thead>
-              <tbody id="import-preview-sample"></tbody>
-            </table>
-          </div>
-          <p id="import-preview-status" role="status" aria-live="polite"></p>
-        </form>
-        <div id="import-notice" class="import-notice" hidden>
-          <p id="import-status" role="status" aria-live="polite" hidden></p>
-          <p id="import-warning" class="import-warning" hidden>Xác nhận sẽ thay thế toàn bộ thời khóa biểu hiện tại.</p>
-        </div>
-      </div>
-      <div class="feedback-actions import-dialog-actions">
-        <button id="back-import-options" class="feedback-close" type="button">Quay lại</button>
-        <button id="confirm-import" type="submit" form="import-preview-form" disabled>Xác nhận</button>
-      </div>
-    </div>
   </dialog>
   <script defer src="/_vercel/insights/script.js"></script>
   <script type="module" src="/js/utils.js?v=__ASSET_VERSION__"></script>

@@ -42,8 +42,6 @@ const state = {
 const $ = (id) => document.getElementById(id);
 
 const isImportPage = window.location.pathname === "/import";
-const openImportButton = $("open-import");
-if (openImportButton) openImportButton.hidden = !isImportPage;
 
 function dayRank(value) {
   const i = DAY_ORDER.findIndex((d) => d.toLowerCase() === String(value).toLowerCase());
@@ -761,8 +759,8 @@ previewExcelButton?.addEventListener("click", async () => {
 const importOptionsDialog = $("import-options-dialog");
 const importSourceSelect = $("import-source");
 const importSourceTabs = [
-  { button: $("excel-import-tab"), panel: $("excel-import-source"), value: "excel" },
   { button: $("json-import-tab"), panel: $("json-import-source"), value: "json" },
+  { button: $("excel-import-tab"), panel: $("excel-import-source"), value: "excel" },
 ].filter((tab) => tab.button && tab.panel);
 const schoolDataUrl = $("school-data-url");
 const reloadSchoolVersionsButton = $("reload-school-versions");
@@ -802,6 +800,7 @@ function saveSchoolImportCache(baseUrl, versions, selectedVersion = "") {
 }
 
 function renderSchoolVersions(versions, selectedVersion = "") {
+  if (!schoolVersionSelect) return;
   const selected = versions.find((version) => version.id === selectedVersion)
     || versions.find((version) => version.default)
     || versions[0];
@@ -817,6 +816,7 @@ function renderSchoolVersions(versions, selectedVersion = "") {
 }
 
 function restoreSchoolImportCache() {
+  if (!schoolDataUrl || !schoolVersionSelect) return;
   const cache = readSchoolImportCache();
   if (!cache || !cache.baseUrl.trim()) return;
   schoolDataUrl.value = cache.baseUrl;
@@ -824,19 +824,26 @@ function restoreSchoolImportCache() {
 }
 
 function updateImportSourceControls() {
-  previewExcelButton.disabled = importSourceSelect.value !== "excel"
-    || !pendingImportFile
-    || isExcelPreviewLoading;
-  loadSchoolPreviewButton.disabled =
-    importSourceSelect.value !== "json"
-    || !schoolVersionSelect.value
-    || schoolVersionSelect.disabled
-    || isSchoolPreviewLoading
-    || isSchoolVersionsLoading;
-  reloadSchoolVersionsButton.disabled =
-    importSourceSelect.value !== "json"
-    || !schoolDataUrl.value.trim()
-    || isSchoolVersionsLoading;
+  if (!importSourceSelect || !schoolVersionSelect || !schoolDataUrl) return;
+  if (previewExcelButton) {
+    previewExcelButton.disabled = importSourceSelect.value !== "excel"
+      || !pendingImportFile
+      || isExcelPreviewLoading;
+  }
+  if (loadSchoolPreviewButton) {
+    loadSchoolPreviewButton.disabled =
+      importSourceSelect.value !== "json"
+      || !schoolVersionSelect.value
+      || schoolVersionSelect.disabled
+      || isSchoolPreviewLoading
+      || isSchoolVersionsLoading;
+  }
+  if (reloadSchoolVersionsButton) {
+    reloadSchoolVersionsButton.disabled =
+      importSourceSelect.value !== "json"
+      || !schoolDataUrl.value.trim()
+      || isSchoolVersionsLoading;
+  }
 }
 
 function setImportSource(source, focusTab = false) {
@@ -867,17 +874,21 @@ for (const [index, tab] of importSourceTabs.entries()) {
   });
 }
 
-openImportButton?.addEventListener("click", () => {
-  pendingImportFile = null;
-  fileEl.value = "";
-  setImportStatus("excel", "");
-  setImportSource("excel");
-  invalidateImportPreview();
-  invalidateSchoolPreview();
-  updateImportSourceControls();
-  importOptionsDialog?.showModal();
+if (window.location.pathname === "/import") {
+  const importUrl = new URL(window.location.href);
+  if (importUrl.search) {
+    importUrl.search = "";
+    window.history.replaceState({}, "", importUrl);
+  }
+  setImportSource("json");
+  if (schoolDataUrl) schoolDataUrl.focus();
+}
+
+$("back-import-options")?.addEventListener("click", () => {
+  const homeUrl = new URL("/", window.location.origin);
+  window.history.replaceState({}, "", homeUrl);
+  window.location.assign(homeUrl);
 });
-$("back-import-options")?.addEventListener("click", () => importOptionsDialog?.close());
 importSourceSelect?.addEventListener("change", () => {
   invalidateSchoolPreview();
   setImportStatus(importSourceSelect.value, "");
@@ -1176,19 +1187,21 @@ if (pullRefreshEl) {
   document.addEventListener("touchcancel", resetPullRefresh, { passive: true });
 }
 
-(async function init() {
-  try {
-    showFlash("Đang tải dữ liệu…");
-    await Promise.all([
-      updatePresence(),
-      updateAnalytics(),
-      loadStats(),
-      loadFilters(),
-      loadDataStatus(),
-    ]);
-    await loadLessons();
-    showFlash("");
-  } catch (err) {
-    showFlash(err.message, true);
-  }
-})();
+if (!isImportPage) {
+  (async function init() {
+    try {
+      showFlash("Đang tải dữ liệu…");
+      await Promise.all([
+        updatePresence(),
+        updateAnalytics(),
+        loadStats(),
+        loadFilters(),
+        loadDataStatus(),
+      ]);
+      await loadLessons();
+      showFlash("");
+    } catch (err) {
+      showFlash(err.message, true);
+    }
+  })();
+}

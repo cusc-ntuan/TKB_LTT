@@ -3,6 +3,7 @@ import { lookup } from 'node:dns/promises';
 import { BlockList, isIP } from 'node:net';
 import { parseExcelBuffer } from '../lib/excel.js';
 import { replaceAll } from '../lib/db.js';
+import { requireAdmin } from '../lib/auth.js';
 import {
   decodeUploadFilename,
   normalizeSchoolTimetable,
@@ -169,7 +170,7 @@ async function loadSchoolVersion(baseUrl, versionId) {
 }
 
 function registerImportRoutes(app) {
-  app.get('/api/import/versions', async (req, res) => {
+  app.get('/api/import/versions', requireAdmin, async (req, res) => {
     try {
       const versions = await getSchoolVersions(req.query.baseUrl);
       res.json({
@@ -188,7 +189,7 @@ function registerImportRoutes(app) {
     }
   });
 
-  app.get('/api/import/preview', async (req, res) => {
+  app.get('/api/import/preview', requireAdmin, async (req, res) => {
     try {
       const { version, summary } = await loadSchoolVersion(req.query.baseUrl, req.query.version);
       res.json({ version, ...summary });
@@ -200,7 +201,7 @@ function registerImportRoutes(app) {
     }
   });
 
-  app.post('/api/import/json', async (req, res) => {
+  app.post('/api/import/json', requireAdmin, async (req, res) => {
     try {
       const { version, rows } = await loadSchoolVersion(req.body.baseUrl, req.body.version);
       const result = await replaceAll(rows, version.effectiveDate);
@@ -221,7 +222,7 @@ function registerImportRoutes(app) {
     }
   });
 
-  app.post('/api/import/preview', upload.single('file'), async (req, res) => {
+  app.post('/api/import/preview', requireAdmin, upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'Chưa chọn file Excel.' });
@@ -240,7 +241,7 @@ function registerImportRoutes(app) {
     }
   });
 
-  app.post('/api/import', upload.single('file'), async (req, res) => {
+  app.post('/api/import', requireAdmin, upload.single('file'), async (req, res) => {
     let stage = 'parse';
     try {
       if (!req.file) {

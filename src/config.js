@@ -22,6 +22,12 @@ const config = {
     owner: 'cusc-ntuan',
     repo: 'TKB_LTT',
   },
+  admin: {
+    username: env.ADMIN_USERNAME || null,
+    password: env.ADMIN_PASSWORD || null,
+    sessionSecret: env.ADMIN_SESSION_SECRET || 'tkb_secret',
+    cookieName: env.ADMIN_COOKIE_NAME || 'tkb_session',
+  },
 };
 
 export { config, env };
