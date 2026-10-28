@@ -1,9 +1,11 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /import/
 
 User-agent: Googlebot
 Allow: /
 Disallow: /api/
+Disallow: /import/
 
 Sitemap: https://xemtkb.io.vn/sitemap.xml

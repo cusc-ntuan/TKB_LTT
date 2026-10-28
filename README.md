@@ -1,120 +1,183 @@
-# Thời khóa biểu
+# Thời khóa biểu THPT Chuyên Lý Tự Trọng
 
-Website xem thời khóa biểu, hỗ trợ nhập dữ liệu từ Excel/CSV hoặc đồng bộ JSON từ hệ thống thời khóa biểu của trường.
+Website tra cứu thời khóa biểu theo lớp, giáo viên và học sinh, đồng thời có khu vực quản trị riêng để nhập và đồng bộ dữ liệu từ trường.
 
-Trang web: [https://xemtkb.io.vn](https://xemtkb.io.vn)
+Trang web chính: https://xemtkb.io.vn
 
-Mã nguồn công khai: [cusc-ntuan/TKB_LTT](https://github.com/cusc-ntuan/TKB_LTT).
+Mã nguồn: https://github.com/cusc-ntuan/TKB_LTT
 
-## Chạy
+## Tính năng chính
+
+- Tra cứu thời khóa biểu theo lớp, giáo viên hoặc học sinh.
+- Chuyển đổi giữa xem cả tuần và xem theo ngày.
+- Chia sẻ link bộ lọc hiện tại.
+- In lịch và sao chép lịch đang hiển thị.
+- Gửi góp ý qua GitHub Issue.
+- Quản trị riêng tại `/import` để nhập dữ liệu từ Excel/CSV hoặc đồng bộ JSON từ trường.
+- Quản trị yêu cầu đăng nhập admin, tách biệt hoàn toàn với trang tìm kiếm thời khóa biểu công khai.
+
+## Yêu cầu hệ thống
+
+- Node.js 18+
+- npm
+- Database Turso
+- File `.env` cấu hình theo mẫu `.env.example`
+
+## Cài đặt
 
 ```bash
 npm install
+cp .env.example .env
+```
+
+Sau đó điền các biến môi trường cần thiết, ví dụ:
+
+```env
+TURSO_DATABASE_URL=libsql://your-database.turso.io
+TURSO_AUTH_TOKEN=your-auth-token
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your-strong-password
+ADMIN_SESSION_SECRET=your-random-secret
+```
+
+Khởi động ứng dụng:
+
+```bash
 npm start
 ```
 
-Toàn bộ mã JavaScript của server, API, script, kiểm thử và giao diện dùng ES Modules.
+Chạy ở chế độ dev:
 
-Ứng dụng yêu cầu kết nối Turso ở cả local lẫn production. Sao chép `.env.example` thành `.env`, sau đó điền `TURSO_DATABASE_URL` và `TURSO_AUTH_TOKEN` từ database Turso của bạn. Không commit `.env` hoặc chia sẻ auth token. Ứng dụng sẽ báo lỗi và dừng khởi động nếu thiếu cấu hình hoặc URL không hợp lệ; không có SQLite local làm dự phòng.
+```bash
+npm run dev
+```
 
-Khi database Turso chưa có bảng/dữ liệu, ứng dụng khởi tạo cấu trúc và nạp dữ liệu mẫu từ `data/TKB.xlsx`. Database đã có dữ liệu sẽ được giữ nguyên.
+Chạy test:
 
-### Biến môi trường tùy chọn
+```bash
+npm test
+```
 
-Các biến bên cạnh Turso trong `.env.example` là tùy chọn:
+## Biến môi trường
+
+### Bắt buộc
 
 | Biến | Mục đích |
 | --- | --- |
-| `PORT`, `HOST` | Cổng và địa chỉ bind khi chạy server local. |
-| `VERCEL_TOKEN`, `VERCEL_PROJECT_ID` | Cho API `/api/analytics` đọc số liệu Web Analytics của project. Bật Web Analytics trên Vercel và dùng token có quyền truy cập project. |
-| `VERCEL_TEAM_ID` | Chỉ cần nếu project thuộc team; có thể lấy trong cài đặt team Vercel. |
-| `VERCEL_ANALYTICS_TOTAL` | Số người truy cập tổng dự phòng để hiển thị ở footer khi không lấy được từ Vercel API. Chỉ điền số; có thể dùng thay cho gọi API. |
-| `GITHUB_FEEDBACK_TOKEN` | Bật gửi góp ý thành GitHub Issue cho `cusc-ntuan/TKB_LTT`. Cần token có quyền **Issues: Read and write** trên repository đó. |
+| `TURSO_DATABASE_URL` | URL database Turso để lưu dữ liệu thời khóa biểu. |
+| `TURSO_AUTH_TOKEN` | Token đọc/ghi cho database Turso. |
+| `ADMIN_USERNAME` | Tài khoản admin đăng nhập vào `/import`. |
+| `ADMIN_PASSWORD` | Mật khẩu admin đăng nhập vào `/import`. |
+| `ADMIN_SESSION_SECRET` | Secret ký phiên đăng nhập admin. |
 
-`VERCEL_TOTAL_VISITORS`, `VERCEL_VISITOR_COUNT` và `VERCEL_VIEWERS_TOTAL` là tên thay thế cho `VERCEL_ANALYTICS_TOTAL`; nếu đặt nhiều biến, ứng dụng ưu tiên theo thứ tự trên.
+### Tùy chọn
 
-Mở http://localhost:3000. Có thể đổi cổng bằng biến môi trường:
-
-```bash
-PORT=4000 npm start
-```
-
-Ứng dụng có manifest để trình duyệt hỗ trợ cài vào màn hình chính.
-
-Trong lúc phát triển, dùng `npm run dev` để chạy server trên mọi interface mạng nội bộ và tự khởi động lại khi các file mã nguồn, giao diện hoặc dữ liệu thay đổi. Truy cập bằng `http://<IP-máy-chạy-server>:3001` từ thiết bị cùng mạng.
-
-Chạy kiểm thử bằng `npm test`.
-
-## Sử dụng
-
-- Chọn chế độ xem theo lớp, giáo viên hoặc học sinh trực tiếp trên trang chính.
-- Nút **Hôm nay** mở lịch trong ngày; bộ lọc có thể được sao chép thành liên kết chia sẻ.
-- Có thể sao chép lịch, tải CSV hoặc in lịch đang hiển thị.
-- Tại `/import`, quản trị viên phải đăng nhập trước khi truy cập chức năng nhập dữ liệu. Thiết lập `ADMIN_USERNAME` và `ADMIN_PASSWORD` trong `.env` (cùng với `ADMIN_SESSION_SECRET` nếu cần) để mở trang nhập và các API liên quan.
-- Sau khi đăng nhập, nhấn **Nhập dữ liệu** rồi chọn nhập từ file Excel/CSV hoặc JSON. Cả hai cách đều xem trước và xác nhận trước khi thay toàn bộ dữ liệu hiện có trong database.
-- Khi nhập JSON, nhập URL thư mục dữ liệu (hoặc URL `versions.json`), chọn phiên bản do trường phát hành. URL nguồn phải dùng HTTPS và trỏ đến máy chủ công khai; ngày áp dụng lấy từ metadata của phiên bản.
-- Nhấn **Góp ý** ở cuối trang để gửi đề xuất hoặc báo lỗi; nội dung sẽ được tạo thành GitHub Issue công khai trong repository `cusc-ntuan/TKB_LTT`. Không gửi thông tin cá nhân hoặc dữ liệu nhạy cảm trong góp ý.
-
-Để bật tính năng góp ý, cấu hình secret `GITHUB_FEEDBACK_TOKEN` trên môi trường triển khai. Dùng fine-grained personal access token chỉ cấp quyền **Issues: Read and write** cho repository `cusc-ntuan/TKB_LTT`. Token chỉ được dùng phía server và không được đưa vào mã frontend.
-
-Các truy vấn đọc lặp lại được cache trong bộ nhớ server để giảm tải Turso. Cache được giới hạn tối đa 100 bộ lọc thời khóa biểu, hết hạn sau 30 giây và được xóa sau mỗi lần nhập dữ liệu.
-
-Footer hiển thị số phiên đang trực tuyến dựa trên heartbeat mỗi 30 giây. Phiên không gửi heartbeat trong 90 giây sẽ được loại khỏi bộ đếm. Nếu biến môi trường `VERCEL_ANALYTICS_TOTAL` (hoặc `VERCEL_TOTAL_VISITORS`, `VERCEL_VISITOR_COUNT`, `VERCEL_VIEWERS_TOTAL`) được đặt trên Vercel, ứng dụng còn hiển thị số người đã từng xem trong footer. Nếu chưa cấu hình, nhãn sẽ là `—` để tránh hiển thị sai số.
-
-## File Excel
-
-Trang nhập hỗ trợ workbook `.xlsx` và file `.csv`; định dạng Excel `.xls` cũ cần được lưu lại thành `.xlsx` hoặc `.csv` trước khi nhập.
-
-Workbook có thể chứa sheet lịch chi tiết theo học sinh hoặc sheet ma trận theo lớp. Ứng dụng ưu tiên sheet có đủ `Họ và Tên`, `Lớp`, `Thứ` và `Tiết`; nếu không có, ứng dụng sẽ đọc sheet ma trận `Thứ`/`Buổi`/`Tiết`:
-
-| Cột | Ý nghĩa |
+| Biến | Mục đích |
 | --- | --- |
-| Lớp | Lớp |
-| Họ và Tên | Học sinh / người học |
-| Thứ | Thứ 2 … Thứ 7 |
-| Buổi | Sáng / Chiều |
-| Tiết | Số tiết |
-| Môn Học | Môn |
-| Phòng Học | Phòng |
-| giáo viên | Giáo viên |
-| Loại tiết | Lý thuyết, thực hành… |
-| Ghi chú | Ghi chú |
+| `PORT`, `HOST` | Cổng và địa chỉ bind khi chạy local. |
+| `VERCEL_TOKEN`, `VERCEL_PROJECT_ID` | Hỗ trợ `/api/analytics` đọc Web Analytics trên Vercel. |
+| `VERCEL_TEAM_ID` | Cần khi project thuộc team Vercel. |
+| `VERCEL_ANALYTICS_TOTAL` | Số lượt xem dự phòng nếu API Vercel không phản hồi. |
+| `ADMIN_COOKIE_NAME` | Tên cookie phiên admin; mặc định là `tkb_admin_session`. |
+| `GITHUB_FEEDBACK_TOKEN` | Bật gửi góp ý thành GitHub Issue. Cần quyền Issues: Read and write cho repo `cusc-ntuan/TKB_LTT`. |
 
-Nhấn **Nhập Excel** trên website để thay toàn bộ dữ liệu trong database.
+Các biến thay thế cho `VERCEL_ANALYTICS_TOTAL` gồm: `VERCEL_TOTAL_VISITORS`, `VERCEL_VISITOR_COUNT`, `VERCEL_VIEWERS_TOTAL`.
 
-## API
+## Cấu trúc dự án
+
+- `src/server.js` — khởi tạo Express server.
+- `src/lib/` — logic dữ liệu, auth, analytics, import, validation.
+- `src/routes/` — route server và API.
+- `public/` — giao diện người dùng web, bao gồm cả trang công khai và trang admin `/import`.
+- `data/` — dữ liệu mẫu và tài liệu hỗ trợ. 
+- `test/` — các test tự động của dự án.
+
+## Sử dụng ứng dụng
+
+### Trang công khai
+
+- Chọn chế độ xem theo lớp, giáo viên hoặc học sinh.
+- Có thể chia sẻ bộ lọc qua URL.
+- Nút **Hôm nay** chuyển tới ngày hợp lệ theo dữ liệu.
+- Có thể in lịch hoặc sao chép lịch hiện tại.
+
+### Trang quản trị `/import`
+
+- Route `/import` là trang riêng dành cho admin.
+- Truy cập cần đăng nhập bằng tài khoản admin.
+- Khi đã đăng nhập, admin có thể:
+  - nhập dữ liệu từ file Excel/CSV
+  - nhập dữ liệu từ nguồn JSON của trường
+  - xem trước dữ liệu trước khi ghi database
+  - xác nhận thay thế toàn bộ dữ liệu hiện có
+
+### Góp ý
+
+Nhấn **Góp ý** ở footer để gửi đề xuất hoặc báo lỗi. Nội dung sẽ được tạo thành GitHub Issue công khai trong repo `cusc-ntuan/TKB_LTT`.
+
+Không gửi dữ liệu cá nhân nhạy cảm trong góp ý.
+
+## File Excel/CSV
+
+Trang nhập hỗ trợ file `.xlsx` và `.csv`.
+
+Các sheet có thể là:
+
+- bảng thời khóa biểu theo học sinh
+- bảng ma trận theo lớp hoặc theo ngày, buổi, tiết
+
+Ứng dụng ưu tiên các cột như: `Họ và Tên`, `Lớp`, `Thứ`, `Buổi`, `Tiết`, `Môn Học`.
+
+## JSON import
+
+Khi nhập dữ liệu JSON, cần:
+
+- nhập URL thư mục dữ liệu hoặc URL `versions.json`
+- chọn phiên bản do trường phát hành
+- xác nhận trước khi ghi dữ liệu vào database
+
+URL nguồn phải là HTTPS và trỏ tới nguồn dữ liệu công khai đáng tin cậy.
+
+## API chính
 
 | Phương thức | Đường dẫn | Mô tả |
 | --- | --- | --- |
-| GET | `/api/stats` | Thống kê số tiết, lớp, giáo viên và phòng |
-| GET | `/api/filters` | Danh sách giá trị dùng cho bộ lọc |
-| GET | `/api/lessons` | Lấy thời khóa biểu theo query filter |
-| GET | `/api/data-status` | Thời điểm nhập dữ liệu thời khóa biểu gần nhất |
-| GET | `/api/import/versions?baseUrl=https://URL/data` | Danh sách phiên bản JSON từ URL trường |
-| GET | `/api/import/preview?baseUrl=https://URL/data&version=v11` | Xem trước dữ liệu JSON của phiên bản |
-| POST | `/api/import/json` | Nhập phiên bản JSON với body `{ "baseUrl": "https://URL/data", "version": "v1" }` |
-| POST | `/api/import/preview` | Phân tích file Excel/CSV và trả bản xem trước, không ghi database |
-| POST | `/api/import` | Nhập file Excel/CSV với field `file` |
-| POST | `/api/presence` | Cập nhật heartbeat và nhận số phiên trực tuyến |
-| POST | `/api/feedback` | Tạo GitHub Issue từ góp ý gửi qua website |
+| GET | `/api/stats` | Thống kê số tiết, lớp, giáo viên |
+| GET | `/api/filters` | Lấy danh sách giá trị bộ lọc |
+| GET | `/api/lessons` | Truy xuất thời khóa biểu theo filter |
+| GET | `/api/data-status` | Trạng thái thời điểm dữ liệu gần nhất |
+| GET | `/api/import/versions` | Lấy danh sách phiên bản từ URL dữ liệu JSON |
+| GET | `/api/import/preview` | Xem trước dữ liệu JSON trước khi nhập |
+| POST | `/api/import/json` | Nhập dữ liệu JSON vào database |
+| POST | `/api/import/preview` | Phân tích file Excel/CSV trước khi ghi |
+| POST | `/api/import` | Nhập file Excel/CSV vào database |
+| POST | `/api/presence` | Heartbeat số người trực tuyến |
+| POST | `/api/feedback` | Tạo issue góp ý trên GitHub |
 
-Ví dụ:
+## Triển khai Vercel
 
-```text
-/api/lessons?lop=10A&buoi=Sáng
-```
-
-## Deploy Vercel
-
-Trên Vercel, thêm hai biến bắt buộc sau trong **Project → Settings → Environment Variables**:
+Trên Vercel cần cấu hình các biến môi trường sau:
 
 | Biến | Giá trị |
 | --- | --- |
-| `TURSO_DATABASE_URL` | URL database Turso, thường bắt đầu bằng `libsql://` |
-| `TURSO_AUTH_TOKEN` | Auth Token đọc/ghi của database |
+| `TURSO_DATABASE_URL` | URL kết nối Turso, bắt đầu bằng `libsql://` hoặc `https://` |
+| `TURSO_AUTH_TOKEN` | Token quyền đọc/ghi database |
 
-Thêm biến cho mọi môi trường cần dùng (Production, Preview hoặc Development), rồi redeploy để áp dụng. URL phải bắt đầu bằng `libsql://` hoặc `https://`. Không commit token vào Git. Các lần **Nhập Excel** ghi vào Turso nên dữ liệu vẫn tồn tại khi Vercel thay instance. Nếu database Turso đã có dữ liệu, khởi động ứng dụng sẽ không ghi đè bằng workbook mẫu.
+Sau đó redeploy. Khi database Turso đã có dữ liệu, ứng dụng sẽ giữ nguyên dữ liệu hiện có và không ghi đè bằng dữ liệu mẫu.
 
-Các log server ghi nhận kết quả khởi tạo database và nhập dữ liệu (số dòng, thời gian, trạng thái); không ghi URL, token hay nội dung từng dòng.
+## SEO
 
-Bật **Web Analytics** trong Vercel Project Settings để xem số người truy cập. Ứng dụng đã nhúng script `/_vercel/insights/script.js` trên trang chính.
+- Trang công khai `/` được phép index bởi crawler.
+- Trang quản trị `/import` và API `/api/*` bị chặn crawl trong `robots.txt`.
+- File `sitemap.xml` chứa URL trang chính để hỗ trợ indexing.
+
+## Bảo mật
+
+- Không commit file `.env`.
+- Không chia sẻ token hoặc secret vào mã nguồn.
+- `ADMIN_SESSION_SECRET` và `ADMIN_PASSWORD` nên dùng giá trị mạnh, riêng tư.
+- Token GitHub feedback chỉ được sử dụng ở server, không hiển thị lên frontend.
+
+## Ghi chú
+
+Dự án này được phát triển cho mục đích quản lý và tra cứu thời khóa biểu nội bộ của trường.
