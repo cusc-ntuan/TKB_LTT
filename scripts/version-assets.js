@@ -25,4 +25,11 @@ for (const htmlPath of htmlPaths) {
 
   fs.writeFileSync(htmlPath, updated);
 }
+
+const swPath = path.join(publicDir, 'sw.js');
+const swSource = fs.readFileSync(swPath, 'utf8');
+if (!swSource.includes('__ASSET_VERSION__')) {
+  throw new Error('Không tìm thấy __ASSET_VERSION__ trong sw.js');
+}
+fs.writeFileSync(swPath, swSource.replaceAll('__ASSET_VERSION__', version));
 console.log(`Asset version: ${version}`);

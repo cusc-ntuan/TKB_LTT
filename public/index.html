@@ -22,13 +22,18 @@
   <meta name="twitter:title" content="Thời khóa biểu THPT Chuyên Lý Tự Trọng Cần Thơ" />
   <meta name="twitter:description" content="Tra cứu thời khóa biểu Trường THPT Chuyên Lý Tự Trọng, Cần Thơ." />
   <link rel="preload" href="/api/filters" as="fetch" crossorigin="anonymous" />
+  <link rel="modulepreload" href="/js/app.js?v=__ASSET_VERSION__" />
+  <link rel="modulepreload" href="/js/utils.js?v=__ASSET_VERSION__" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
-  <link rel="stylesheet" href="/styles/main.css?v=__ASSET_VERSION__" />
+  <link rel="stylesheet" href="/styles/main.css?v=__ASSET_VERSION__" fetchpriority="high" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </noscript>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -176,8 +181,12 @@
       </div>
     </form>
   </dialog>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+  </script>
   <script defer src="/_vercel/insights/script.js"></script>
-  <script type="module" src="/js/utils.js?v=__ASSET_VERSION__"></script>
   <script type="module" src="/js/app.js?v=__ASSET_VERSION__"></script>
 </body>
 </html>

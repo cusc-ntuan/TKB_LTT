@@ -15,6 +15,8 @@ const PALETTE = [
 ];
 
 const FILTER_STORAGE_KEY = "tkb-filters";
+const LESSONS_CACHE_KEY = "tkb-lessons-cache";
+const DATASET_STATUS_KEY = "tkb-dataset-status";
 const PRESENCE_STORAGE_KEY = "tkb-client-id";
 const SCHOOL_IMPORT_CACHE_KEY = "tkb-school-import-cache";
 const PULL_REFRESH_THRESHOLD = 72;
@@ -37,6 +39,7 @@ const state = {
   day: sharedParams.get("day") || savedFilters.day || "",
   filters: null,
   lessons: [],
+  datasetVersion: "",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -186,8 +189,8 @@ function syncViewControls() {
   });
 }
 
-async function fetchJSON(url, options) {
-  const res = await fetch(url, options);
+async function fetchJSON(url, options = {}) {
+  const res = await fetch(url, { ...options, cache: options.cache || "no-store" });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Lỗi máy chủ");
   return data;
@@ -297,11 +300,53 @@ function updateEffectiveDate(value) {
   }
 }
 
+function datasetVersion(status) {
+  return `${status?.updatedAt || ""}|${status?.effectiveDate || ""}`;
+}
+
+function readDatasetStatus() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(DATASET_STATUS_KEY) || "null");
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch (_err) {
+    return null;
+  }
+}
+
+function writeDatasetStatus(status) {
+  try {
+    localStorage.setItem(DATASET_STATUS_KEY, JSON.stringify({
+      updatedAt: status.updatedAt || null,
+      effectiveDate: status.effectiveDate || null,
+    }));
+  } catch (_err) {}
+}
+
+function clearCachedLessons() {
+  try {
+    localStorage.removeItem(LESSONS_CACHE_KEY);
+  } catch (_err) {}
+}
+
+function applyDatasetStatus(status, { persist = true } = {}) {
+  const previous = state.datasetVersion;
+  const version = datasetVersion(status);
+  state.datasetVersion = version;
+  if (persist) writeDatasetStatus(status);
+  updateEffectiveDate(status?.effectiveDate);
+  const effectiveDateInput = $("import-effective-date");
+  if (effectiveDateInput) effectiveDateInput.value = status?.effectiveDate || localDateInputValue();
+  if (previous && version && previous !== version) {
+    clearCachedLessons();
+    return { version, changed: true };
+  }
+  return { version, changed: false };
+}
+
 async function loadDataStatus() {
   const status = await fetchJSON("/api/data-status");
-  updateEffectiveDate(status.effectiveDate);
-  const effectiveDateInput = $("import-effective-date");
-  if (effectiveDateInput) effectiveDateInput.value = status.effectiveDate || localDateInputValue();
+  return applyDatasetStatus(status);
 }
 
 async function loadFilters() {
@@ -356,14 +401,67 @@ window.addEventListener("storage", (event) => {
   } catch (_err) {}
 });
 
+function selectedEntity() {
+  const entityEl = $("entity");
+  if (state.filters) return (entityEl?.value.trim() || "").trim();
+  return (entityEl?.value.trim()
+    || sharedParams.get(state.mode)
+    || savedFilters.entityByMode?.[state.mode]
+    || "").trim();
+}
+
+function lessonsQueryParams(entity = selectedEntity()) {
+  const params = new URLSearchParams();
+  const buoi = $("buoi")?.value || "";
+  const q = $("q")?.value.trim() || "";
+  if (entity) params.set(state.mode, entity);
+  if (buoi) params.set("buoi", buoi);
+  if (q) params.set("q", q);
+  if (state.view === "day" && state.day) params.set("thu", state.day);
+  return params;
+}
+
+function readCachedLessons(params) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LESSONS_CACHE_KEY) || "null");
+    if (!parsed || parsed.key !== params.toString() || !Array.isArray(parsed.lessons)) return null;
+    if (!state.datasetVersion || parsed.version !== state.datasetVersion) return null;
+    return parsed.lessons;
+  } catch (_err) {
+    return null;
+  }
+}
+
+function writeCachedLessons(params, lessons) {
+  if (!state.datasetVersion) return;
+  try {
+    localStorage.setItem(LESSONS_CACHE_KEY, JSON.stringify({
+      key: params.toString(),
+      version: state.datasetVersion,
+      lessons,
+    }));
+  } catch (_err) {}
+}
+
+function paintCachedLessons() {
+  const entity = selectedEntity();
+  if (!entity) return false;
+  const cached = readCachedLessons(lessonsQueryParams(entity));
+  if (!cached) return false;
+  state.lessons = cached;
+  updatePrintHeading(entity);
+  renderBoard();
+  return true;
+}
+
 function updateEntitySelect() {
   const control = $("entity-control");
   if (!control) return;
   control.setAttribute("aria-label", MODE_LABEL[state.mode]);
 
   const values = state.filters?.[state.mode] || [];
-  const current = savedFilters.entityByMode?.[state.mode] || $("entity")?.value || "";
-  const defaultValue = values.includes(current) ? current : "";
+  const current = sharedParams.get(state.mode) || savedFilters.entityByMode?.[state.mode] || $("entity")?.value || "";
+  const defaultValue = values.includes(current) ? current : (current && !values.length ? current : "");
 
   if (!savedFilters.entityByMode) savedFilters.entityByMode = {};
   if (defaultValue && !savedFilters.entityByMode[state.mode]) {
@@ -386,7 +484,8 @@ function updateEntitySelect() {
 
   control.innerHTML = `<select id="entity"></select>`;
   const entityEl = $("entity");
-  fillSelect(entityEl, values, `Chọn ${MODE_LABEL[state.mode].toLowerCase()}`);
+  const selectValues = values.length ? values : (defaultValue ? [defaultValue] : []);
+  fillSelect(entityEl, selectValues, `Chọn ${MODE_LABEL[state.mode].toLowerCase()}`);
   entityEl.value = defaultValue;
 }
 
@@ -402,14 +501,8 @@ function updatePrintHeading(entity = $("entity")?.value.trim() || "") {
 async function loadLessons() {
   const requestId = ++lessonsRequestId;
   saveFilters();
-  const params = new URLSearchParams();
-  const entityEl = $("entity");
-  const buoiEl = $("buoi");
-  const qEl = $("q");
-
-  const entity = entityEl ? entityEl.value.trim() : (savedFilters.entityByMode?.[state.mode] || "");
-  const buoi = buoiEl?.value || "";
-  const q = qEl?.value.trim() || "";
+  const entity = selectedEntity();
+  const params = lessonsQueryParams(entity);
   updatePrintHeading(entity);
 
   if (!entity) {
@@ -418,12 +511,15 @@ async function loadLessons() {
     return;
   }
 
-  if (entity) params.set(state.mode, entity);
-  if (buoi) params.set("buoi", buoi);
-  if (q) params.set("q", q);
-  if (state.view === "day" && state.day) params.set("thu", state.day);
+  const cached = readCachedLessons(params);
+  if (cached && requestId === lessonsRequestId) {
+    state.lessons = cached;
+    renderBoard();
+  }
+
   const lessons = await fetchJSON(`/api/lessons?${params}`);
   if (requestId !== lessonsRequestId) return;
+  writeCachedLessons(params, lessons);
   state.lessons = lessons;
   renderBoard();
 }
@@ -1046,7 +1142,8 @@ if (importPreviewForm && importPreviewStatus && confirmImportBtn && effectiveDat
       }
       importOptionsDialog.close();
       showFlash(result.message);
-      await Promise.all([loadStats(), loadFilters()]);
+      clearCachedLessons();
+      await Promise.all([loadStats(), loadFilters(), loadDataStatus()]);
       await loadLessons();
     } catch (error) {
       importPreviewStatus.textContent = error.message;
@@ -1187,17 +1284,27 @@ if (pullRefreshEl) {
   document.addEventListener("touchcancel", resetPullRefresh, { passive: true });
 }
 
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
+
 if (!isImportPage) {
   (async function init() {
+    const remembered = readDatasetStatus();
+    if (remembered) applyDatasetStatus(remembered, { persist: false });
+    updateEntitySelect();
+    const painted = paintCachedLessons();
+    updatePresence();
+    updateAnalytics();
     try {
-      showFlash("Đang tải dữ liệu…");
-      await Promise.all([
-        updatePresence(),
-        updateAnalytics(),
-        loadStats(),
-        loadFilters(),
-        loadDataStatus(),
-      ]);
+      if (!painted) showFlash("Đang tải dữ liệu…");
+      const [, statusResult] = await Promise.all([loadFilters(), loadDataStatus()]);
+      if (statusResult?.changed) {
+        state.lessons = [];
+        const board = $("board");
+        if (board) board.innerHTML = `<p class="empty">Đang tải thời khóa biểu mới…</p>`;
+        showFlash("Đang tải thời khóa biểu mới…");
+      }
       await loadLessons();
       showFlash("");
     } catch (err) {
