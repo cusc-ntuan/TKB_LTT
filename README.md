@@ -1,4 +1,4 @@
-# TKB — Time Table App
+# Thời khóa biểu THPT Chuyên Lý Tự Trọng, Cần Thơ
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Live-success" alt="Live" />
